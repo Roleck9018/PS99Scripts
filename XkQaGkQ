@@ -1,3 +1,8 @@
+getgenv().DatabaseClientConfig = {
+	["Debug Prints"] = false,
+	["API Username"] = "Service1"
+}
+
 repeat task.wait(1) until game:IsLoaded()
 
 if not _G.AgingPotionMode and not _G.EggHatchMode then
