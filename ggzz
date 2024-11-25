@@ -1,6 +1,6 @@
 --getgenv().KeyC = "Daddy"
 
-if getgenv().KeyC ~= "Daddy" then
+if getgenv().KeyC ~= "abCCC" then
     game:Shutdown()
 end
 
