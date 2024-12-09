@@ -1,4 +1,3 @@
-
 repeat task.wait(1) until game:IsLoaded() and game:GetService("ReplicatedStorage"):FindFirstChild("ClientModules") and game:GetService("ReplicatedStorage").ClientModules:FindFirstChild("Core") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager").Apps:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp"):FindFirstChild("Whiteout")
 local RS = game:GetService("ReplicatedStorage")
 local ReplicatedStorage = RS
@@ -113,6 +112,7 @@ function dailyLoginAppClick()
 end
 
 if Player.Name == ATConfig.MainAccUsername then
+    print("Main Account")
     RoleChooserDialogConnection = Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog:GetPropertyChangedSignal("Visible"):Connect(function()
         task.wait()
         if Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Visible then
@@ -207,7 +207,9 @@ if Player.Name == ATConfig.MainAccUsername then
 else
 
     --- Sender Account
+    print("Sender Account")
     if ATConfig.buyPet then
+        prnt("Buy Pet : Enabled")
         if ATConfig.CurrencyName == "Bucks" then
             CurrencyC = ClientData.get_data()[Player.Name].money
         elseif ATConfig.CurrencyName == "Event" then
@@ -220,6 +222,7 @@ else
 
     repeat
         if game.Players:FindFirstChild(ATConfig.MainAccUsername) and (not InvEmpty()) then
+            print("Waiting for Trade Accept")
             repeat task.wait(1)
                 RS.API:WaitForChild("TradeAPI/SendTradeRequest"):FireServer(game:GetService("Players"):WaitForChild(ATConfig.MainAccUsername))
             until game:GetService("Players").LocalPlayer.PlayerGui.TradeApp.Frame.Visible
@@ -241,6 +244,7 @@ else
                 game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/ConfirmTrade"):FireServer()
                 wait(0.1)
             end
+            print("Trade Ended")
         end
         task.wait(1.5)
         print("Waiting for acc")
