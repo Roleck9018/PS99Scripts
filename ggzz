@@ -209,7 +209,7 @@ else
     --- Sender Account
     print("Sender Account")
     if ATConfig.buyPet then
-        prnt("Buy Pet : Enabled")
+        print("Buy Pet : Enabled")
         if ATConfig.CurrencyName == "Bucks" then
             CurrencyC = ClientData.get_data()[Player.Name].money
         elseif ATConfig.CurrencyName == "Event" then
