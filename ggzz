@@ -4,6 +4,8 @@ _G.EggHatchMode = true
 EggName = "Garden Egg"
 ]]
 
+print("WWW")
+
 repeat task.wait(1) until game:IsLoaded()
 
 if not _G.AgingPotionMode and not _G.EggHatchMode then
