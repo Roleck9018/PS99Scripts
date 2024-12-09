@@ -1,3 +1,4 @@
+
 repeat task.wait(1) until game:IsLoaded() and game:GetService("ReplicatedStorage"):FindFirstChild("ClientModules") and game:GetService("ReplicatedStorage").ClientModules:FindFirstChild("Core") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager").Apps:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp"):FindFirstChild("Whiteout")
 local RS = game:GetService("ReplicatedStorage")
 local ReplicatedStorage = RS
@@ -6,8 +7,6 @@ local RouterClient = require(RS.ClientModules.Core:WaitForChild("RouterClient"):
 local Main_Menu = require(RS.ClientModules.Core.UIManager.Apps.MainMenuApp)
 local Player = game:GetService("Players").LocalPlayer
 local VirtualInputManager = game:GetService("VirtualInputManager")
-
-print("Auto Trade by Roleck")
 
 Player.PlayerGui.DialogApp.Enabled = false
 
@@ -57,67 +56,219 @@ function InvEmpty()
     return true
 end
 
-if ATConfig.buyPet then
-    if ATConfig.CurrencyName == "Bucks" then
-        CurrencyC = ClientData.get_data()[Player.Name].money
-    elseif ATConfig.CurrencyName == "Event" then
-        CurrencyC = (ClientData.get_data()[game.Players.LocalPlayer.Name][require(game:GetService("ReplicatedStorage").SharedModules.SharedDB.AltCurrencyData)["name"]] or 0)
-    end
-
-    NumberOfPets = math.floor(CurrencyC/ATConfig.CostC)
-    RS.API:WaitForChild("ShopAPI/BuyItem"):InvokeServer("pets", findPetID(ATConfig.PetName), {["buy_count"] = NumberOfPets})
-end
-
-repeat
-    if game.Players:FindFirstChild(ATConfig.MainAccUsername) and (not InvEmpty()) then
-        repeat task.wait(1)
-            RS.API:WaitForChild("TradeAPI/SendTradeRequest"):FireServer(game:GetService("Players"):WaitForChild(ATConfig.MainAccUsername))
-        until game:GetService("Players").LocalPlayer.PlayerGui.TradeApp.Frame.Visible
-
-        -- Add Pets
-        count = 0
-        for i,v in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
-            if v.id == findPetID(ATConfig.PetName) then        
-                RS.API:FindFirstChild("TradeAPI/AddItemToOffer"):FireServer(v.unique)
-                count += 1
-                if count >= 18 then break end
+function FireButton(PassOn, dialogFramePass)
+    task.wait()
+    local dialogFrame = dialogFramePass or "NormalDialog"
+    for i, v in pairs(Player.PlayerGui.DialogApp.Dialog[dialogFrame].Buttons:GetDescendants()) do
+        if v.Name == "TextLabel" then
+            if v.Text == PassOn then
+                task.wait(2)
+                firesignal(v.Parent.Parent.MouseButton1Down)
+                firesignal(v.Parent.Parent.MouseButton1Click)
+                firesignal(v.Parent.Parent.MouseButton1Up)
+                break
             end
         end
+    end
+end
 
-        -- Accept/Confirm
-        while game:GetService("Players").LocalPlayer.PlayerGui.TradeApp.Frame.Visible do
-            game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/AcceptNegotiation"):FireServer()
-            wait(0.1)
-            game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/ConfirmTrade"):FireServer()
-            wait(0.1)
+function clickGuiButton(button: Instance, xOffset: number, yOffset: number)
+    print(button)
+    if typeof(button) ~= "Instance" then print("button is not a Instance") return end
+    local xOffset = xOffset or 60
+    local yOffset = yOffset or 60
+    print(button.AbsolutePosition.X)
+    task.wait()
+    VirtualInputManager:SendMouseButtonEvent(button.AbsolutePosition.X + xOffset, button.AbsolutePosition.Y + yOffset, 0, true, game, 1)
+    task.wait()
+    VirtualInputManager:SendMouseButtonEvent(button.AbsolutePosition.X + xOffset, button.AbsolutePosition.Y + yOffset, 0, false, game, 1)
+    task.wait()
+end
+
+function dailyLoginAppClick()
+    if not Player.PlayerGui.DailyLoginApp.Enabled then return end
+    Player.PlayerGui.DailyLoginApp:WaitForChild("Frame")
+    Player.PlayerGui.DailyLoginApp.Frame:WaitForChild("Body")
+    Player.PlayerGui.DailyLoginApp.Frame.Body:WaitForChild("Buttons")
+    for _, v in Player.PlayerGui.DailyLoginApp.Frame.Body.Buttons:GetDescendants() do
+        if v.Name == "TextLabel" then
+            if v.Text == "CLOSE" then
+                clickGuiButton(v.Parent.Parent) -- Close button
+                task.wait(1)
+            elseif v.Text == "CLAIM!" then
+                -- clickGuiButton(v.Parent.Parent) -- Claim button
+                -- task.wait(.1)
+                -- clickGuiButton(v.Parent.Parent) -- Close button
+                -- task.wait(1)
+                firesignal(v.Parent.Parent.MouseButton1Down)
+                firesignal(v.Parent.Parent.MouseButton1Click)
+                firesignal(v.Parent.Parent.MouseButton1Up) --claim button
+                task.wait(.2)
+                firesignal(v.Parent.Parent.MouseButton1Down)
+                firesignal(v.Parent.Parent.MouseButton1Click)
+                firesignal(v.Parent.Parent.MouseButton1Up) --close button
+            end
         end
     end
-    task.wait(1.5)
-    print("Waiting for acc")
-until InvEmpty()
+end
 
-local ScreenGui = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.Name = "RoloxBotOverlay"
-ScreenGui.Enabled = true
+if Player.Name == ATConfig.MainAccUsername then
+    RoleChooserDialogConnection = Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog:GetPropertyChangedSignal("Visible"):Connect(function()
+        task.wait()
+        if Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Visible then
+            -- firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.ChooseParent.MouseButton1Click)
+            firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Down)
+            firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Click)
+            firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Up)
+            RoleChooserDialogConnection:Disconnect()
+        end
+    end)
 
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.BackgroundColor3 = Color3.new(0, 0, 0)
-Frame.BorderSizePixel = 0
-Frame.Position = UDim2.new(0, 0, 0, -70)
-Frame.Size = UDim2.new(1, 0, 1, 70)
+    --// Clicks no robux product button
+    RobuxProductDialogConnection1 = Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog:GetPropertyChangedSignal("Visible"):Connect(function()
+        if not Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Visible then return end
+        Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog:WaitForChild("Buttons")
+        task.wait()
+        for _, v in Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Buttons:GetDescendants() do
+            if v.Name == "TextLabel" then
+                if v.Text == "No Thanks" then
+                    -- clickGuiButton(v.Parent.Parent) -- no thanks button
+                    firesignal(v.Parent.Parent.MouseButton1Down)
+                    firesignal(v.Parent.Parent.MouseButton1Click)
+                    firesignal(v.Parent.Parent.MouseButton1Up)
+                    RobuxProductDialogConnection1:Disconnect()
+                end
+            end
+        end
+    end)
 
-local Frame_2 = Instance.new("Frame", Frame)
-Frame_2.AnchorPoint = Vector2.new(0.5, 0.5)
-Frame_2.BackgroundTransparency = 1
-Frame_2.Position = UDim2.new(0.5, 0, 0.5, 0)
-Frame_2.Size = UDim2.new(0.75, 0, 0, 750)
 
-local TextLabel = Instance.new("TextLabel", Frame_2)
-TextLabel.BackgroundTransparency = 1
-TextLabel.Size = UDim2.new(1, 0, 1, 0)
-TextLabel.Font = Enum.Font.GothamBold
-TextLabel.Text = [[<font color="rgb(144, 238, 144)">TRANSFER COMPLETED</font>]]
-TextLabel.TextColor3 = Color3.new(1, 1, 1)
-TextLabel.TextSize = 90
-TextLabel.RichText = true
+    RobuxProductDialogConnection2 = Player.PlayerGui.DialogApp.Dialog:GetPropertyChangedSignal("Visible"):Connect(function()
+        if not Player.PlayerGui.DialogApp.Dialog.Visible then return end
+        Player.PlayerGui.DialogApp.Dialog:WaitForChild("RobuxProductDialog")
+        if not Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Visible then return end
+        Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog:WaitForChild("Buttons")
+        task.wait()
+        for _, v in Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Buttons:GetDescendants() do
+            if v.Name == "TextLabel" then
+                if v.Text == "No Thanks" then
+                    -- clickGuiButton(v.Parent.Parent) -- no thanks button
+                    firesignal(v.Parent.Parent.MouseButton1Down)
+                    firesignal(v.Parent.Parent.MouseButton1Click)
+                    firesignal(v.Parent.Parent.MouseButton1Up)
+                    RobuxProductDialogConnection2:Disconnect()
+                end
+            end
+        end
+    end)
+
+
+    DailyClaimConnection = Player.PlayerGui.DailyLoginApp:GetPropertyChangedSignal("Enabled"):Connect(function()
+        dailyLoginAppClick()
+    end)
+
+    if Player.PlayerGui.NewsApp.Enabled then
+        local AbsPlay = Player.PlayerGui.NewsApp
+            :WaitForChild("EnclosingFrame")
+            :WaitForChild("MainFrame")
+            :WaitForChild("Contents")
+            :WaitForChild("PlayButton")
+
+        firesignal(AbsPlay.MouseButton1Down)
+        firesignal(AbsPlay.MouseButton1Click)
+        firesignal(AbsPlay.MouseButton1Up)
+    end
+    
+    if Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Visible then --Baby, ChooseParent
+        firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Click)
+        RoleChooserDialogConnection:Disconnect()
+    end
+    
+    repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    dailyLoginAppClick()
+
+    spawn(function()
+        while task.wait() do
+            for i, v in pairs(game.Players:GetChildren()) do
+                game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/AcceptOrDeclineTradeRequest"):InvokeServer(v, true)
+            end
+        end
+    end)
+
+    while task.wait() do
+        repeat task.wait() until game:GetService("Players").LocalPlayer.PlayerGui.TradeApp.Frame.Visible
+        while game:GetService("Players").LocalPlayer.PlayerGui.TradeApp.Frame.Visible do
+            game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/AcceptNegotiation"):FireServer()
+            task.wait(0.1)
+            game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/ConfirmTrade"):FireServer()
+            task.wait(0.1)
+        end
+    end
+else
+
+    --- Sender Account
+    if ATConfig.buyPet then
+        if ATConfig.CurrencyName == "Bucks" then
+            CurrencyC = ClientData.get_data()[Player.Name].money
+        elseif ATConfig.CurrencyName == "Event" then
+            CurrencyC = (ClientData.get_data()[game.Players.LocalPlayer.Name][require(game:GetService("ReplicatedStorage").SharedModules.SharedDB.AltCurrencyData)["name"]] or 0)
+        end
+
+        NumberOfPets = math.floor(CurrencyC/ATConfig.CostC)
+        RS.API:WaitForChild("ShopAPI/BuyItem"):InvokeServer("pets", findPetID(ATConfig.PetName), {["buy_count"] = NumberOfPets})
+    end
+
+    repeat
+        if game.Players:FindFirstChild(ATConfig.MainAccUsername) and (not InvEmpty()) then
+            repeat task.wait(1)
+                RS.API:WaitForChild("TradeAPI/SendTradeRequest"):FireServer(game:GetService("Players"):WaitForChild(ATConfig.MainAccUsername))
+            until game:GetService("Players").LocalPlayer.PlayerGui.TradeApp.Frame.Visible
+
+            -- Add Pets
+            count = 0
+            for i,v in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
+                if v.id == findPetID(ATConfig.PetName) then        
+                    RS.API:FindFirstChild("TradeAPI/AddItemToOffer"):FireServer(v.unique)
+                    count += 1
+                    if count >= 18 then break end
+                end
+            end
+
+            -- Accept/Confirm
+            while game:GetService("Players").LocalPlayer.PlayerGui.TradeApp.Frame.Visible do
+                game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/AcceptNegotiation"):FireServer()
+                wait(0.1)
+                game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/ConfirmTrade"):FireServer()
+                wait(0.1)
+            end
+        end
+        task.wait(1.5)
+        print("Waiting for acc")
+    until InvEmpty()
+
+    local ScreenGui = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ScreenGui.Name = "RoloxBotOverlay"
+    ScreenGui.Enabled = true
+
+    local Frame = Instance.new("Frame", ScreenGui)
+    Frame.BackgroundColor3 = Color3.new(0, 0, 0)
+    Frame.BorderSizePixel = 0
+    Frame.Position = UDim2.new(0, 0, 0, -70)
+    Frame.Size = UDim2.new(1, 0, 1, 70)
+
+    local Frame_2 = Instance.new("Frame", Frame)
+    Frame_2.AnchorPoint = Vector2.new(0.5, 0.5)
+    Frame_2.BackgroundTransparency = 1
+    Frame_2.Position = UDim2.new(0.5, 0, 0.5, 0)
+    Frame_2.Size = UDim2.new(0.75, 0, 0, 750)
+
+    local TextLabel = Instance.new("TextLabel", Frame_2)
+    TextLabel.BackgroundTransparency = 1
+    TextLabel.Size = UDim2.new(1, 0, 1, 0)
+    TextLabel.Font = Enum.Font.GothamBold
+    TextLabel.Text = [[<font color="rgb(144, 238, 144)">TRANSFER COMPLETED</font>]]
+    TextLabel.TextColor3 = Color3.new(1, 1, 1)
+    TextLabel.TextSize = 90
+    TextLabel.RichText = true
+end
