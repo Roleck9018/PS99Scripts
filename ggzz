@@ -1,3 +1,18 @@
+-- xMaLpG:xMaLpG!123
+getgenv().ATConfig = {
+    MainAccUsername = "xMaLpG",
+    PetName = "Bauble Buddies", -- Pet Name to trade/buy
+
+    buyPet = true,
+    CurrencyName = "Event", -- ("Bucks" / "Event")
+    CostC = 85000, -- Cost of Pet
+
+    AgePets = true, -- Ages up all pets with PetName
+    PetsToAge = {"Bauble Buddies"},
+}
+
+-- loadstring(game:HttpGet("https://pastebin.com/raw/ZSBGR7Ru"))()
+
 repeat task.wait(1) until game:IsLoaded() and game:GetService("ReplicatedStorage"):FindFirstChild("ClientModules") and game:GetService("ReplicatedStorage").ClientModules:FindFirstChild("Core") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager").Apps:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp"):FindFirstChild("Whiteout")
 local RS = game:GetService("ReplicatedStorage")
 local ReplicatedStorage = RS
@@ -111,82 +126,233 @@ function dailyLoginAppClick()
     end
 end
 
-if Player.Name == ATConfig.MainAccUsername then
-    print("Main Account")
-    RoleChooserDialogConnection = Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog:GetPropertyChangedSignal("Visible"):Connect(function()
-        task.wait()
-        if Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Visible then
-            -- firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.ChooseParent.MouseButton1Click)
-            firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Down)
-            firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Click)
-            firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Up)
-            RoleChooserDialogConnection:Disconnect()
-        end
-    end)
-
-    --// Clicks no robux product button
-    RobuxProductDialogConnection1 = Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog:GetPropertyChangedSignal("Visible"):Connect(function()
-        if not Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Visible then return end
-        Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog:WaitForChild("Buttons")
-        task.wait()
-        for _, v in Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Buttons:GetDescendants() do
-            if v.Name == "TextLabel" then
-                if v.Text == "No Thanks" then
-                    -- clickGuiButton(v.Parent.Parent) -- no thanks button
-                    firesignal(v.Parent.Parent.MouseButton1Down)
-                    firesignal(v.Parent.Parent.MouseButton1Click)
-                    firesignal(v.Parent.Parent.MouseButton1Up)
-                    RobuxProductDialogConnection1:Disconnect()
-                end
-            end
-        end
-    end)
-
-
-    RobuxProductDialogConnection2 = Player.PlayerGui.DialogApp.Dialog:GetPropertyChangedSignal("Visible"):Connect(function()
-        if not Player.PlayerGui.DialogApp.Dialog.Visible then return end
-        Player.PlayerGui.DialogApp.Dialog:WaitForChild("RobuxProductDialog")
-        if not Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Visible then return end
-        Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog:WaitForChild("Buttons")
-        task.wait()
-        for _, v in Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Buttons:GetDescendants() do
-            if v.Name == "TextLabel" then
-                if v.Text == "No Thanks" then
-                    -- clickGuiButton(v.Parent.Parent) -- no thanks button
-                    firesignal(v.Parent.Parent.MouseButton1Down)
-                    firesignal(v.Parent.Parent.MouseButton1Click)
-                    firesignal(v.Parent.Parent.MouseButton1Up)
-                    RobuxProductDialogConnection2:Disconnect()
-                end
-            end
-        end
-    end)
-
-
-    DailyClaimConnection = Player.PlayerGui.DailyLoginApp:GetPropertyChangedSignal("Enabled"):Connect(function()
-        dailyLoginAppClick()
-    end)
-
-    if Player.PlayerGui.NewsApp.Enabled then
-        local AbsPlay = Player.PlayerGui.NewsApp
-            :WaitForChild("EnclosingFrame")
-            :WaitForChild("MainFrame")
-            :WaitForChild("Contents")
-            :WaitForChild("PlayButton")
-
-        firesignal(AbsPlay.MouseButton1Down)
-        firesignal(AbsPlay.MouseButton1Click)
-        firesignal(AbsPlay.MouseButton1Up)
+function CheckPetEquip()
+    if require(game.ReplicatedStorage.ClientModules.Core.ClientData).get("pet_char_wrappers")[1] then
+        return true
+    else
+        return false
     end
-    
-    if Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Visible then --Baby, ChooseParent
+end
+
+function CheckPetEquipID(id)
+    if require(game.ReplicatedStorage.ClientModules.Core.ClientData).get("pet_char_wrappers")[1] then
+        if id == require(game.ReplicatedStorage.ClientModules.Core.ClientData).get("pet_char_wrappers")[1].pet_unique then
+            return true
+        else
+            return false
+        end
+    else
+        return false
+    end
+end
+
+function CheckFG(PetID)
+    for i,v in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
+        if i == PetID then        
+            if v.properties.age == 6 then
+                return true
+            else
+                return false
+            end
+        end
+    end
+end
+
+function findPetID(petName)
+    for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
+        if type(entry) == "table" and string.lower(entry.name) == string.lower(petName) then
+            return entry.id
+        end
+    end
+    return nil
+end
+function findPetName(PetID)
+    for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
+        if type(entry) == "table" and string.lower(entry.id) == string.lower(PetID) then
+            return entry.name
+        end
+    end
+    return nil
+end
+
+function CheckPetRarity(PetName)
+    for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
+        if type(entry) == "table" and string.lower(entry.name) == string.lower(PetName) then
+            if entry.rarity == "common" then
+                return "Common"
+            elseif entry.rarity == "uncommon" then 
+                return "Uncommon"
+            elseif entry.rarity == "rare" then 
+                return "Rare"
+            elseif entry.rarity == "ultra_rare" then 
+                return "Ultra Rare"
+            elseif entry.rarity == "legendary" then 
+                return "Legendary"
+            end
+        end
+    end
+end
+
+function CheckEgg(PetID)
+    for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
+        if entry.id == PetID then
+            if entry.is_egg == true then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+function RoT(t) return t[math.random(1, #t)] end
+
+function isInTable(tableA, item)
+    for i, v in pairs(tableA) do
+        if v == item then return true end
+    end
+    return false
+end
+
+function FGPet(petID)
+    print("Starting FG Pet :", petID)
+    local suc, err = pcall(function()
+        game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("ToolAPI/Equip"):InvokeServer(petID)
+        print("Waiting for Pet Equip")
+        repeat task.wait() until require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1]
+
+        breakLoop = false
+        local hasPet = false
+        while not breakLoop and task.wait() do
+            print("Looping through BreakLoop")
+            for i,v in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
+                if i == petID and v.properties.age < 6 then
+                    hasPet = true
+
+                    print("Waiting till oldAge & oldPercentage is updated")
+                    local stC = tick()
+                    repeat task.wait(0.05) 
+                        _G.oldAge = require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["age"]
+                        _G.oldPercentage = require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["percentage"]
+                    until (_G.oldAge == require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["age"] and _G.oldPercentage == require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["percentage"]) or (tick() - stC >= 60)
+                    
+                    local Foods = {}
+                    for l,o in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.food) do
+                        if o.id == "pet_age_potion" then
+                            table.insert(Foods, l)
+                        end
+                    end
+                    if #Foods == 0 then
+                        print("Potions Finished")
+                        breakLoop = true
+                        break
+                    end
+                    
+                    if CheckPetEquip() and CheckPetEquipID(i) and not CheckFG(i) then
+                        petID = require(game.ReplicatedStorage.ClientModules.Core.ClientData).get("pet_char_wrappers")[1]["pet_unique"]
+                        game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("PetAPI/ConsumeFoodItem"):FireServer(RoT(Foods), petID)
+                    else
+                        print("err", CheckPetEquip(), CheckPetEquipID(i), CheckFG(i))
+                        break
+                    end
+                    task.wait(0.1)
+                    StartTick = tick()
+                    repeat task.wait() until
+                    require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.age == 6 
+                    or require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.age ~= _G.oldAge
+                    or require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.percentage ~= _G.oldPercentage 
+                    or (tick() - StartTick >= 10)
+                    --print("Completed Wait till next progression")
+                elseif i == petID and v.properties.age == 6 then
+                    breakLoop = true
+                    break
+                end
+            end
+
+            -- Break loop if pet not in inv
+            if not hasPet then break end
+        end
+    end)
+    if not suc then print(err) end
+    print("FG Pet : " .. petID)
+end
+
+RoleChooserDialogConnection = Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog:GetPropertyChangedSignal("Visible"):Connect(function()
+    task.wait()
+    if Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Visible then
+        -- firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.ChooseParent.MouseButton1Click)
+        firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Down)
         firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Click)
+        firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Up)
         RoleChooserDialogConnection:Disconnect()
     end
-    
-    repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    dailyLoginAppClick()
+end)
 
+--// Clicks no robux product button
+RobuxProductDialogConnection1 = Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog:GetPropertyChangedSignal("Visible"):Connect(function()
+    if not Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Visible then return end
+    Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog:WaitForChild("Buttons")
+    task.wait()
+    for _, v in Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Buttons:GetDescendants() do
+        if v.Name == "TextLabel" then
+            if v.Text == "No Thanks" then
+                -- clickGuiButton(v.Parent.Parent) -- no thanks button
+                firesignal(v.Parent.Parent.MouseButton1Down)
+                firesignal(v.Parent.Parent.MouseButton1Click)
+                firesignal(v.Parent.Parent.MouseButton1Up)
+                RobuxProductDialogConnection1:Disconnect()
+            end
+        end
+    end
+end)
+
+
+RobuxProductDialogConnection2 = Player.PlayerGui.DialogApp.Dialog:GetPropertyChangedSignal("Visible"):Connect(function()
+    if not Player.PlayerGui.DialogApp.Dialog.Visible then return end
+    Player.PlayerGui.DialogApp.Dialog:WaitForChild("RobuxProductDialog")
+    if not Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Visible then return end
+    Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog:WaitForChild("Buttons")
+    task.wait()
+    for _, v in Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Buttons:GetDescendants() do
+        if v.Name == "TextLabel" then
+            if v.Text == "No Thanks" then
+                -- clickGuiButton(v.Parent.Parent) -- no thanks button
+                firesignal(v.Parent.Parent.MouseButton1Down)
+                firesignal(v.Parent.Parent.MouseButton1Click)
+                firesignal(v.Parent.Parent.MouseButton1Up)
+                RobuxProductDialogConnection2:Disconnect()
+            end
+        end
+    end
+end)
+
+
+DailyClaimConnection = Player.PlayerGui.DailyLoginApp:GetPropertyChangedSignal("Enabled"):Connect(function()
+    dailyLoginAppClick()
+end)
+
+if Player.PlayerGui.NewsApp.Enabled then
+    local AbsPlay = Player.PlayerGui.NewsApp
+        :WaitForChild("EnclosingFrame")
+        :WaitForChild("MainFrame")
+        :WaitForChild("Contents")
+        :WaitForChild("PlayButton")
+
+    firesignal(AbsPlay.MouseButton1Down)
+    firesignal(AbsPlay.MouseButton1Click)
+    firesignal(AbsPlay.MouseButton1Up)
+end
+
+if Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Visible then --Baby, ChooseParent
+    firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Click)
+    RoleChooserDialogConnection:Disconnect()
+end
+
+repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+dailyLoginAppClick()
+
+repeat task.wait(2) until game:GetService("Players")
+if game.Players.LocalPlayer.Name == ATConfig.MainAccUsername then
+    print("Main Account")
     spawn(function()
         while task.wait() do
             for i, v in pairs(game.Players:GetChildren()) do
@@ -218,6 +384,15 @@ else
 
         NumberOfPets = math.floor(CurrencyC/ATConfig.CostC)
         RS.API:WaitForChild("ShopAPI/BuyItem"):InvokeServer("pets", findPetID(ATConfig.PetName), {["buy_count"] = NumberOfPets})
+    end
+
+    -- Aging Pets
+    if ATConfig.AgePets then
+        for i,v in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
+            if isInTable(ATConfig.PetsToAge, findItemName(v.id)) then        
+                FGPet(i)
+            end
+        end
     end
 
     repeat
