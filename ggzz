@@ -1,19 +1,4 @@
--- xMaLpG:xMaLpG!123
-getgenv().ATConfig = {
-    MainAccUsername = "xMaLpG",
-    PetName = "Bauble Buddies", -- Pet Name to trade/buy
-
-    buyPet = true,
-    CurrencyName = "Event", -- ("Bucks" / "Event")
-    CostC = 85000, -- Cost of Pet
-
-    AgePets = true, -- Ages up all pets with PetName
-    PetsToAge = {"Bauble Buddies"},
-}
-
--- loadstring(game:HttpGet("https://pastebin.com/raw/ZSBGR7Ru"))()
-
-print("Auto Trade by Roleck -- 1.10")
+print("Auto Utility System by Roleck -- v1.10")
 
 repeat task.wait(1) until game:IsLoaded() and game:GetService("ReplicatedStorage"):FindFirstChild("ClientModules") and game:GetService("ReplicatedStorage").ClientModules:FindFirstChild("Core") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager").Apps:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp"):FindFirstChild("Whiteout")
 local RS = game:GetService("ReplicatedStorage")
@@ -390,8 +375,9 @@ else
 
     -- Aging Pets
     if ATConfig.AgePets then
+        print("Starting Age Pots")
         for i,v in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
-            if isInTable(ATConfig.PetsToAge, findItemName(v.id)) then        
+            if isInTable(ATConfig.PetsToAge, findPetName(v.id)) then        
                 FGPet(i)
             end
         end
