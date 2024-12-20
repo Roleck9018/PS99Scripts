@@ -1,4 +1,4 @@
-print("Auto Utility System by Roleck -- v1.20")
+print("Auto Utility System by Roleck -- v1.22 (new fixes)")
 repeat task.wait(1) until game:IsLoaded() and game:GetService("ReplicatedStorage"):FindFirstChild("ClientModules") and game:GetService("ReplicatedStorage").ClientModules:FindFirstChild("Core") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager").Apps:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp"):FindFirstChild("Whiteout")
 local RS = game:GetService("ReplicatedStorage")
 local ReplicatedStorage = RS
@@ -225,70 +225,63 @@ function PetMatch(petID)
     end
 end
 
+function IsEatingOrDrinking()
+    a = require(game:GetService("ReplicatedStorage").ClientModules.Game.PetEntities.PetEntityManager)
+    a = a.get_local_owned_pet_entities()[1]["active_reactions"]
+
+    if a.EatReaction then
+        -- a.EatReaction.is_potion
+        -- .is_drink
+        return true
+    end
+    return false
+end
+
 function FGPet(petID)
-    print("Starting FG Pet :", petID)
-    local suc, err = pcall(function()
-        game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("ToolAPI/Equip"):InvokeServer(petID)
-        print("Waiting for Pet Equip")
-        repeat task.wait() until require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1]
+    game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("ToolAPI/Equip"):InvokeServer(petID)
+    repeat task.wait() until ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1]
 
-        breakLoop = false
-        local hasPet = false
-        while not breakLoop and task.wait() do
-            print("Looping through BreakLoop")
-            for i,v in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
-                if i == petID and v.properties.age < 6 then
-                    hasPet = true
+    breakLoop = false
+    while not breakLoop and task.wait() do
+        for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
+            if i == petID and v.properties.age < 6 then
+                print("Waiting till oldAge & oldPercentage is updated")
+                repeat task.wait(0.05) 
+                    _G.oldAge = ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["age"]
+                    _G.oldPercentage = ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["percentage"]
+                until _G.oldAge == ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["age"] and _G.oldPercentage == ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["percentage"]
+                
+                local Foods = {}
+                for l,o in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.food) do
+                    if o.id == "pet_age_potion" then        
+                        table.insert(Foods, l)
+                    end
+                end
+                
+                if CheckPetEquip() and CheckPetEquipID(i) and not CheckFG(i) then
+                    petID = ClientData.get("pet_char_wrappers")[1]["pet_unique"]
 
-                    print("Waiting till oldAge & oldPercentage is updated")
-                    local stC = tick()
-                    repeat task.wait(0.05) 
-                        _G.oldAge = require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["age"]
-                        _G.oldPercentage = require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["percentage"]
-                    until (_G.oldAge == require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["age"] and _G.oldPercentage == require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["percentage"]) or (tick() - stC >= 60)
-                    
-                    local Foods = {}
-                    for l,o in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.food) do
-                        if o.id == "pet_age_potion" then
-                            table.insert(Foods, l)
-                        end
-                    end
-                    if #Foods == 0 then
-                        print("Potions Finished")
-                        breakLoop = true
-                        break
-                    end
-                    
-                    if CheckPetEquip() and CheckPetEquipID(i) and not CheckFG(i) then
-                        petID = require(game.ReplicatedStorage.ClientModules.Core.ClientData).get("pet_char_wrappers")[1]["pet_unique"]
-                        game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("PetAPI/ConsumeFoodItem"):FireServer(RoT(Foods), petID)
-                    else
-                        print("err", CheckPetEquip(), CheckPetEquipID(i), CheckFG(i))
-                        game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("ToolAPI/Equip"):InvokeServer(petID)
-                        print("Waiting for Pet Equip")
-                        repeat task.wait() until require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1]
-                        break
-                    end
-                    task.wait(0.1)
-                    StartTick = tick()
-                    repeat task.wait() until
-                    require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.age == 6 
-                    or require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.age ~= _G.oldAge
-                    or require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.percentage ~= _G.oldPercentage 
-                    or (tick() - StartTick >= 10)
-                    --print("Completed Wait till next progression")
-                elseif i == petID and v.properties.age == 6 then
-                    breakLoop = true
+                    RS.API:WaitForChild("PetObjectAPI/CreatePetObject"):InvokeServer("__Enum_PetObjectCreatorType_2", {["pet_unique"] = petID, ["unique_id"] = RoT(Foods)})
+                    local st = tick()
+                    repeat task.wait() until IsEatingOrDrinking() or (tick() - st >= 10)
+                else
                     break
                 end
+                task.wait(0.1)
+                StartTick = tick()
+                repeat task.wait() until
+               (ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.age == 6 
+                or ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.age ~= _G.oldAge
+                or ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.percentage ~= _G.oldPercentage or (tick() - StartTick >= 10))
+                and not IsEatingOrDrinking()
+                print("Completed Wait till next progression, eating status:", IsEatingOrDrinking())
+            elseif i == petID and v.properties.age == 6 then
+                breakLoop = true
+                break
             end
-
-            -- Break loop if pet not in inv
-            if not hasPet then break end
         end
-    end)
-    if not suc then print(err) end
-    print("FG Pet : " .. petID)
+    end
+    print("Pet Successfully FG : " .. petID)
 end
 
 function Optimizer()
