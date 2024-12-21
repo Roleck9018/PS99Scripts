@@ -1,4 +1,4 @@
-print("Auto Utility System by Roleck -- v1.22 (new fixes)")
+print("Auto Utility System by Roleck -- v1.23 (new fixes)")
 repeat task.wait(1) until game:IsLoaded() and game:GetService("ReplicatedStorage"):FindFirstChild("ClientModules") and game:GetService("ReplicatedStorage").ClientModules:FindFirstChild("Core") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager").Apps:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp"):FindFirstChild("Whiteout")
 local RS = game:GetService("ReplicatedStorage")
 local ReplicatedStorage = RS
@@ -237,6 +237,16 @@ function IsEatingOrDrinking()
     return false
 end
 
+function GetPotions()
+    local Foods = {}
+    for l,o in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.food) do
+        if o.id == "pet_age_potion" then
+            table.insert(Foods, l)
+        end
+    end
+    return #Foods
+end
+
 function FGPet(petID)
     game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("ToolAPI/Equip"):InvokeServer(petID)
     repeat task.wait() until ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1]
@@ -256,6 +266,11 @@ function FGPet(petID)
                     if o.id == "pet_age_potion" then        
                         table.insert(Foods, l)
                     end
+                end
+
+                if #Foods == 0 then
+                    breakLoop = true
+                    break
                 end
                 
                 if CheckPetEquip() and CheckPetEquipID(i) and not CheckFG(i) then
@@ -547,9 +562,12 @@ else
     if ATConfig.AgePets then
         print("Starting Age Pots")
         for i,v in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
-            if isInTable(ATConfig.PetsToAge, findPetName(v.id)) then        
-                FGPet(i)
+            if isInTable(ATConfig.PetsToAge, findPetName(v.id)) then
+                if GetPotions() > 0 then
+                    FGPet(i)
+                end
             end
+            task.wait()
         end
 
         if ATConfig.autoFuse then
