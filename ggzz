@@ -1,9 +1,30 @@
+--[[
+getgenv().ATConfig = {
+    MainAccUsername = "xMaLpG",
+    PetsToTrade = {"Partridge"},
+    autoFuse = true, -- Auto Convert to Neon/Mega
+    
+    buyIceTray = false, -- Buys Ice Trays with all currency
+    openIceTray = false, -- Opens ALL Ice Trays in account
+    tradeIceTray = false, -- Trades ALL Ice Trays (if u want to sell or smthng)
+
+    buyPet = true,
+    PetName = "Partridge", -- Pet Name to trade/buy
+    CurrencyName = "Event", -- ("Bucks" / "Event")
+    CostC = 79000, -- Cost of Pet
+
+    AgePets = true,
+    useTinyAgePotion = true,
+    PetsToAge = {"Partridge"},
+}
+]]
+
 if getgenv().RKey == "AutoPotGUI" then
     repeat task.wait() until game:IsLoaded() and game:GetService("ReplicatedStorage"):FindFirstChild("ClientModules") and game:GetService("ReplicatedStorage").ClientModules:FindFirstChild("Core") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager").Apps:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp"):FindFirstChild("Whiteout")
 
     for i, v in pairs(debug.getupvalue(require(game:GetService("ReplicatedStorage").ClientModules.Core.RouterClient.RouterClient).init, 7)) do v.Name = i end
     for i,v in pairs(getconnections(game.Players.LocalPlayer.Idled)) do v:Disable() end
-
+    
     local RS = game:GetService("ReplicatedStorage")
     local ReplicatedStorage = RS
     local ClientData = require(RS.ClientModules.Core.ClientData)
@@ -11,7 +32,10 @@ if getgenv().RKey == "AutoPotGUI" then
     local Main_Menu = require(RS.ClientModules.Core.UIManager.Apps.MainMenuApp)
     local Player = game:GetService("Players").LocalPlayer
     local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-
+    
+    useTinyAgePotion = false
+    current_potion_type = nil
+    
     function CountTable(tableA)
         local counter = 0
         for i, v in pairs(tableA) do
@@ -19,42 +43,42 @@ if getgenv().RKey == "AutoPotGUI" then
         end
         return counter
     end
-
+    
     function findPetID(petName)
-    for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
-        if type(entry) == "table" and string.lower(entry.name) == string.lower(petName) then
-            return entry.id
-        end
-    end
-    return nil
+       for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
+           if type(entry) == "table" and string.lower(entry.name) == string.lower(petName) then
+               return entry.id
+           end
+       end
+       return nil
     end
     function findPetName(PetID)
-    for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
-        if type(entry) == "table" and string.lower(entry.id) == string.lower(PetID) then
-            return entry.name
-        end
+       for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
+           if type(entry) == "table" and string.lower(entry.id) == string.lower(PetID) then
+               return entry.name
+           end
+       end
+       return nil
     end
-    return nil
-    end
-
+    
     function findItemID(itemName, itemType)
-    for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB)[itemType]) do
-        if type(entry) == "table" and string.lower(entry.name) == string.lower(itemName) then
-            return entry.id
-        end
+       for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB)[itemType]) do
+           if type(entry) == "table" and string.lower(entry.name) == string.lower(itemName) then
+               return entry.id
+           end
+       end
+       return nil
     end
-    return nil
-    end
-
+    
     function findItemName(itemID, itemType)
-    for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB)[itemType]) do
-        if type(entry) == "table" and string.lower(entry.id) == string.lower(itemID) then
-            return entry.name
-        end
+       for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB)[itemType]) do
+           if type(entry) == "table" and string.lower(entry.id) == string.lower(itemID) then
+               return entry.name
+           end
+       end
+       return nil
     end
-    return nil
-    end
-
+    
     function CheckPetRarity(PetName)
         for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
             if type(entry) == "table" and string.lower(entry.name) == string.lower(PetName) then
@@ -72,21 +96,21 @@ if getgenv().RKey == "AutoPotGUI" then
             end
         end
     end
-
+    
     function CheckEgg(PetID)
-    for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
-        if entry.id == PetID then
-            if entry.is_egg == true then
-                return true
-            end
-        end
+       for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
+           if entry.id == PetID then
+               if entry.is_egg == true then
+                   return true
+               end
+           end
+       end
+       return false
     end
-    return false
-    end
-
-    function CheckPetRaritywID(PetName)
+    
+    function CheckPetRaritywID(pet_id)
         for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
-            if type(entry) == "table" and string.lower(entry.id) == string.lower(PetName) then
+            if type(entry) == "table" and string.lower(entry.id) == string.lower(pet_id) then
                 if entry.rarity == "common" then
                     return "Common"
                 elseif entry.rarity == "uncommon" then 
@@ -101,7 +125,7 @@ if getgenv().RKey == "AutoPotGUI" then
             end
         end
     end
-
+    
     function CheckInvisiblePet(petID)
         for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
             if type(entry) == "table" and string.lower(entry.id) == string.lower(petID) then
@@ -109,211 +133,193 @@ if getgenv().RKey == "AutoPotGUI" then
             end
         end
     end
-
-    function GetPetList()
-    local Pets = {}
     
-    -- Get pets from inventory that meet the age criteria
+    function GetPetList()
+       local Pets = {}
+       
         for _, pet in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
             if pet.properties.age < 6 and not CheckInvisiblePet(pet.id) then
                 table.insert(Pets, pet.id)
             end
         end
+       
+       local uniquePets = {}
+       local uniqueValues = {}
+       for _, id in ipairs(Pets) do
+           if not uniqueValues[id] then
+               uniqueValues[id] = true
+               table.insert(uniquePets, id)
+           end
+       end
+       
+       local filteredPets = {}
+       for _, id in ipairs(uniquePets) do
+           if not (CheckEgg(id) or id == "practice_dog") then
+               table.insert(filteredPets, id)
+           end
+       end
+       
+       local PetsWithNames = {}
+       for _, id in ipairs(filteredPets) do
+           local PetName = findPetName(id)
+           local Rarity = CheckPetRarity(PetName)
+           local FinalName = PetName .. " - " .. Rarity
+           table.insert(PetsWithNames, FinalName)
+       end
+       
+       local rarityOrder = {
+           ["Legendary"] = 1,
+           ["Ultra Rare"] = 2,
+           ["Rare"] = 3,
+           ["Uncommon"] = 4,
+           ["Common"] = 5
+       }
     
-    -- Remove duplicates
-    local uniquePets = {}
-    local uniqueValues = {}
-    for _, id in ipairs(Pets) do
-        if not uniqueValues[id] then
-            uniqueValues[id] = true
-            table.insert(uniquePets, id)
-        end
+       table.sort(PetsWithNames, function(a, b)
+           local aRarity = a:match("%- (.+)$")
+           local bRarity = b:match("%- (.+)$")
+           return (rarityOrder[aRarity] or 6) < (rarityOrder[bRarity] or 6)
+       end)
+    
+       return PetsWithNames
     end
     
-    -- Remove useless pets
-    local filteredPets = {}
-    for _, id in ipairs(uniquePets) do
-        if not (CheckEgg(id) or id == "practice_dog") then
-            table.insert(filteredPets, id)
-        end
-    end
-    
-    -- Generate final pet names with rarity
-    local PetsWithNames = {}
-    for _, id in ipairs(filteredPets) do
-        local PetName = findPetName(id)
-        local Rarity = CheckPetRarity(PetName)
-        local FinalName = PetName .. " - " .. Rarity
-        table.insert(PetsWithNames, FinalName)
-    end
-    
-    -- Define rarity order for sorting
-    local rarityOrder = {
-        ["Legendary"] = 1,
-        ["Ultra Rare"] = 2,
-        ["Rare"] = 3,
-        ["Uncommon"] = 4,
-        ["Common"] = 5
-    }
-
-    -- Sort pets by rarity
-    table.sort(PetsWithNames, function(a, b)
-        local aRarity = a:match("%- (.+)$")
-        local bRarity = b:match("%- (.+)$")
-        return (rarityOrder[aRarity] or 6) < (rarityOrder[bRarity] or 6)
-    end)
-
-    return PetsWithNames
-    end
-
     function CheckPetEquip()
-    if ClientData.get("pet_char_wrappers")[1] then
-        return true
+       if ClientData.get("pet_char_wrappers")[1] then
+           return true
+       end
     end
-    end
-
+    
     function CheckPetEquipID(id)
-    if ClientData.get("pet_char_wrappers")[1] then
-        if id == ClientData.get("pet_char_wrappers")[1].pet_unique then
-            return true
-        end
+       if ClientData.get("pet_char_wrappers")[1] then
+          if id == ClientData.get("pet_char_wrappers")[1].pet_unique then
+             return true
+          end
+       end
     end
-    end
-
+    
     function CheckFG(PetID)
-    for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
-        if i == PetID then
+       for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
+           if i == PetID then
                 if v.properties.age == 6 then
-                return true
+                   return true
                 else
-                return false
+                   return false
                 end
-        end
+           end
+       end
     end
-    end
-
-    function GetPotions()
+    
+    function GetPotions(potionType)
         local Foods = {}
         for l,o in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.food) do
-            if o.id == "pet_age_potion" then
+            if o.id == potionType then
                 table.insert(Foods, l)
             end
         end
         return #Foods
     end
-
-    function IsEatingOrDrinking()
-    a = require(game:GetService("ReplicatedStorage").ClientModules.Game.PetEntities.PetEntityManager)
-    a = a.get_local_owned_pet_entities()[1]["active_reactions"]
-
-    if a.EatReaction then
-        -- a.EatReaction.is_potion
-        -- .is_drink
-        return true
-    end
-    return false
-    end
-
-    function RoT(t) return t[math.random(1, #t)] end
-
-    function AutoNeonPets()
-    while task.wait() do
-        local petNames = {}
-        for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do  
-            if v.properties.age == 6 and not v.properties.mega_neon and not v.properties.neon then        
-                table.insert(petNames, v.id)
-            end
-        end
-
-        local frequencyCount = {}
-        local repeatedPets = {}
-        
-        for _, name in ipairs(petNames) do
-            if frequencyCount[name] then
-                frequencyCount[name] = frequencyCount[name] + 1
-                if frequencyCount[name] == 4 then
-                    table.insert(repeatedPets, name)
-                end
-            else
-                frequencyCount[name] = 1
-            end
-        end
-
-        testTable = {}
-        if #repeatedPets == 0 then break end
-        CorePet = RoT(repeatedPets)
-
-        for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
-            if string.find(v.id, CorePet) and v.properties.age == 6 and not v.properties.mega_neon and not v.properties.neon then        
-                if #testTable == 4 then break end
-                table.insert(testTable, i)
-            end
-        end
-
-        local args = {
-            [1] = {
-                [1] = testTable[1],
-                [2] = testTable[2],
-                [3] = testTable[3],
-                [4] = testTable[4]
-            }
-        }
-        game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("PetAPI/DoNeonFusion"):InvokeServer(unpack(args))
-        task.wait(0.1)
-    end
-    end
-
-    function AutoMegaPets()
-    while task.wait() do
-        local petNames = {}   
-        for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do  
-            if v.properties.age == 6 and v.properties.neon then        
-                table.insert(petNames, v.id)
-            end
-        end
     
-        local frequencyCount = {}
-        local repeatedPets = {}
-        
-        for _, name in ipairs(petNames) do
-            if frequencyCount[name] then
-                frequencyCount[name] = frequencyCount[name] + 1
-                if frequencyCount[name] == 4 then
-                    table.insert(repeatedPets, name)
-                end
-            else
-                frequencyCount[name] = 1
-            end
-        end
-
-        if #repeatedPets == 0 then break end
-
-        testTable = {}
-        for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
-            if string.find(v.id, RoT(repeatedPets)) and v.properties.age == 6 and v.properties.neon then        
-                if #testTable == 4 then break end
-                table.insert(testTable, i)
-            end
-        end
-
-        if #testTable < 4 then break end
-
-        local args = {
-            [1] = {
-                [1] = testTable[1],
-                [2] = testTable[2],
-                [3] = testTable[3],
-                [4] = testTable[4]
-            }
-        }
-        game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("PetAPI/DoNeonFusion"):InvokeServer(unpack(args))
-        task.wait(0.1)
+    function RoT(t) return t[math.random(1, #t)] end
+    
+    function AutoNeonPets()
+       while task.wait() do
+           local petNames = {}
+           for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do  
+               if v.properties.age == 6 and not v.properties.mega_neon and not v.properties.neon then        
+                   table.insert(petNames, v.id)
+               end
+           end
+    
+           local frequencyCount = {}
+           local repeatedPets = {}
+           
+           for _, name in ipairs(petNames) do
+               if frequencyCount[name] then
+                   frequencyCount[name] = frequencyCount[name] + 1
+                   if frequencyCount[name] == 4 then
+                       table.insert(repeatedPets, name)
+                   end
+               else
+                   frequencyCount[name] = 1
+               end
+           end
+    
+           testTable = {}
+           if #repeatedPets == 0 then break end
+           CorePet = RoT(repeatedPets)
+    
+           for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
+               if string.find(v.id, CorePet) and v.properties.age == 6 and not v.properties.mega_neon and not v.properties.neon then        
+                   if #testTable == 4 then break end
+                   table.insert(testTable, i)
+               end
+           end
+    
+           local args = {
+               [1] = {
+                   [1] = testTable[1],
+                   [2] = testTable[2],
+                   [3] = testTable[3],
+                   [4] = testTable[4]
+               }
+           }
+           game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("PetAPI/DoNeonFusion"):InvokeServer(unpack(args))
+           task.wait(0.1)
+       end
     end
+    
+    function AutoMegaPets()
+       while task.wait() do
+           local petNames = {}   
+           for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do  
+               if v.properties.age == 6 and v.properties.neon then        
+                   table.insert(petNames, v.id)
+               end
+           end
+      
+           local frequencyCount = {}
+           local repeatedPets = {}
+           
+           for _, name in ipairs(petNames) do
+               if frequencyCount[name] then
+                   frequencyCount[name] = frequencyCount[name] + 1
+                   if frequencyCount[name] == 4 then
+                       table.insert(repeatedPets, name)
+                   end
+               else
+                   frequencyCount[name] = 1
+               end
+           end
+    
+           if #repeatedPets == 0 then break end
+    
+           testTable = {}
+           for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
+               if string.find(v.id, RoT(repeatedPets)) and v.properties.age == 6 and v.properties.neon then        
+                   if #testTable == 4 then break end
+                   table.insert(testTable, i)
+               end
+           end
+    
+           if #testTable < 4 then break end
+    
+           local args = {
+               [1] = {
+                   [1] = testTable[1],
+                   [2] = testTable[2],
+                   [3] = testTable[3],
+                   [4] = testTable[4]
+               }
+           }
+           game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("PetAPI/DoNeonFusion"):InvokeServer(unpack(args))
+           task.wait(0.1)
+       end
     end
-
+    
     function GetInv(petType, petName)
         local tempInv = {}
-
+    
         if petType == "Normal" then
             for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
                 if string.find(v.id, petName) and v.properties.age < 6 and not v.properties.neon and not v.properties.mega_neon and not CheckInvisiblePet(v.id) then        
@@ -326,7 +332,7 @@ if getgenv().RKey == "AutoPotGUI" then
                     tempInv[i] = v
                 end
             end
-
+    
         elseif petType == "Both" then
             for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
                 if string.find(v.id, petName) and v.properties.age < 6 and not CheckInvisiblePet(v.id) then        
@@ -334,108 +340,129 @@ if getgenv().RKey == "AutoPotGUI" then
                 end
             end
         end
-
+    
         return tempInv
     end
-
-    function FGPet(petID)
-        game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("ToolAPI/Equip"):InvokeServer(petID)
-        repeat task.wait() until ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1]
-
-        breakLoop = false
-        while not breakLoop and task.wait() do
-            for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
-                if i == petID and v.properties.age < 6 then
-                    --print("Waiting till oldAge & oldPercentage is updated")
+    
+    function FGPet(petID, potionType)
+        if not CheckFG(petID) then
+            game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("ToolAPI/Equip"):InvokeServer(petID)
+            repeat task.wait() until ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1]
+    
+            while task.wait() do
+                if ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["age"] < 6 then
+                    print("Waiting till oldAge & oldPercentage is updated")
                     repeat task.wait(0.05) 
-                        _G.oldAge = ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["age"]
-                        _G.oldPercentage = ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["percentage"]
-                    until _G.oldAge == ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["age"] and _G.oldPercentage == ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["percentage"]
+                        oldAge = ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["age"]
+                        oldPercentage = ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["percentage"]
+                    until oldAge == ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["age"] and oldPercentage == ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["percentage"]
                     
                     local Foods = {}
                     for l,o in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.food) do
-                        if o.id == "pet_age_potion" then        
+                        if o.id == potionType then --"pet_age_potion" then
                             table.insert(Foods, l)
                         end
                     end
+    
+                    if #Foods == 0 then 
+                        if potionType == "tiny_pet_age_potion" then 
+                            useTinyAgePotion = false
+                            current_potion_type = "pet_age_potion"
+                            return FGPet(petID, "pet_age_potion")
+                        else
+                            return
+                        end
+                    end
                     
-                    if CheckPetEquip() and CheckPetEquipID(i) and not CheckFG(i) then
-                        petID = ClientData.get("pet_char_wrappers")[1]["pet_unique"]
-
-                        RS.API:WaitForChild("PetObjectAPI/CreatePetObject"):InvokeServer("__Enum_PetObjectCreatorType_2", {["pet_unique"] = petID, ["unique_id"] = RoT(Foods)})
-                        local st = tick()
-                        repeat task.wait() until IsEatingOrDrinking() or (tick() - st >= 10)
+                    if CheckPetEquipID(petID) and not CheckFG(petID) then
+                        while not (workspace.PetObjects:FindFirstChild("AgePotion") or workspace.PetObjects:FindFirstChild("TinyAgePotion")) do
+                            local a,b = RS.API:WaitForChild("PetObjectAPI/CreatePetObject"):InvokeServer("__Enum_PetObjectCreatorType_2", {["pet_unique"] = petID, ["unique_id"] = RoT(Foods)})
+                            print(a,b)
+                            task.wait(0.1)
+                        end
+                        RS.API:WaitForChild("PetAPI/ConsumeFoodObject"):FireServer(workspace.PetObjects:FindFirstChildWhichIsA("Model"), petID)
+    
+                        local StartTick = tick()
+                        repeat task.wait() until
+                        ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.age == 6 
+                        or ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.age ~= oldAge
+                        or ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.percentage ~= oldPercentage or (tick() - StartTick >= 10)
+    
+                        PotionLabel:Set("TOTAL POTIONS: " .. tostring(GetPotions("pet_age_potion")), 13619902566)
+                        TinyPotionLabel:Set("TOTAL TINY POTIONS: " .. tostring(GetPotions("tiny_pet_age_potion")), 18853094132)
                     else
                         break
                     end
-                    task.wait(0.1)
-                    StartTick = tick()
-                    repeat task.wait() until
-                    (ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.age == 6 
-                    or ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.age ~= _G.oldAge
-                    or ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.percentage ~= _G.oldPercentage or (tick() - StartTick >= 10))
-                    and not IsEatingOrDrinking()
-
-                    PotionLabel:Set("TOTAL POTIONS: [" .. tostring(GetPotions()) .. "]", 13619902566)
-                    --print("Completed Wait till next progression, eating status:", IsEatingOrDrinking())
-                elseif i == petID and v.properties.age == 6 then
-                    breakLoop = true
+    
+                    print("Completed Wait till next progression")
+                else
                     break
                 end
             end
+            print("Pet Successfully FG : " .. petID)
+        else
+            print("Pet Not Found or Pet is Full Grown")
         end
-        print("Pet Successfully FG : " .. petID)
     end
-
+    
+    function NotifyNoPotions()
+        Rayfield:Notify({
+            Title = "No Potions Left!",
+            Content = "Account has 0 potions",
+            Duration = 6.5,
+            Image = 4483362458,
+        })
+    end
+    
     -- UI
     local Window = Rayfield:CreateWindow({
-    Name = "Rolox's Pot Machine",
-    Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
-    LoadingTitle = "hello!!",
-    LoadingSubtitle = "by roleck1",
-    Theme = "DarkBlue", -- Check https://docs.sirius.menu/rayfield/configuration/themes
-
-    DisableRayfieldPrompts = false,
-    DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
-
-    ConfigurationSaving = {
-        Enabled = false,
-        FolderName = nil, -- Create a custom folder for your hub/game
-        FileName = "Big Hub"
-    },
-
-    Discord = {
-        Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
-        Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ABCD would be ABCD
-        RememberJoins = true -- Set this to false to make them join the discord every time they load it up
-    },
-
-    KeySystem = false, -- Set this to true to use our key system
-    KeySettings = {
-        Title = "Untitled",
-        Subtitle = "Key System",
-        Note = "Ask roleck1 for a key", -- Use this to tell the user how to get a key
-        FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
-        SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
-        GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
-        Key = {"123"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
-    }
+       Name = "Rolox's Pot Machine",
+       Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
+       LoadingTitle = "hello!!",
+       LoadingSubtitle = "by roleck1",
+       Theme = "DarkBlue", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+    
+       DisableRayfieldPrompts = false,
+       DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
+    
+       ConfigurationSaving = {
+          Enabled = false,
+          FolderName = nil, -- Create a custom folder for your hub/game
+          FileName = "Big Hub"
+       },
+    
+       Discord = {
+          Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
+          Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ABCD would be ABCD
+          RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+       },
+    
+       KeySystem = false, -- Set this to true to use our key system
+       KeySettings = {
+          Title = "Untitled",
+          Subtitle = "Key System",
+          Note = "Ask roleck1 for a key", -- Use this to tell the user how to get a key
+          FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
+          SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+          GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+          Key = {"123"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+       }
     })
-
+    
     local Tab = Window:CreateTab("Main")
     local Section = Tab:CreateSection("Apply Potions")
-
+    
     local PetListDropdown = Tab:CreateDropdown({
-    Name = "Pet List",
-    Options = {unpack(GetPetList())},
-    CurrentOption = {},
-    MultipleOptions = true,
-    Flag = "Dropdown1",
-    Callback = function(Options)
+       Name = "Pet List",
+       Options = {unpack(GetPetList())},
+       CurrentOption = {},
+       MultipleOptions = true,
+       Flag = "Dropdown1",
+       Callback = function(Options)
             --
-    end,
+       end,
     })
-
+    
     local PetTypeDropdown = Tab:CreateDropdown({
         Name = "Select Pet Type",
         Options = {"Normal", "Neon", "Both"},
@@ -446,7 +473,7 @@ if getgenv().RKey == "AutoPotGUI" then
                 --
         end,
     })
-
+    
     Tab:CreateButton({
         Name = "Refresh Pet List",
         Callback = function()
@@ -454,43 +481,46 @@ if getgenv().RKey == "AutoPotGUI" then
             PetListDropdown.CurrentOption = {}
         end,
     })
-
+    
     AutoNeonToggle = Tab:CreateToggle({
-    Name = "Auto Neon",
-    CurrentValue = false,
-    Flag = "Toggle1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-    Callback = function(Value)
-        while AutoNeonToggle.CurrentValue and task.wait(1) do
-            AutoNeonPets()
-        end
-    end,
+       Name = "Auto Neon",
+       CurrentValue = false,
+       Flag = "Toggle1",
+       Callback = function(Value)
+          while AutoNeonToggle.CurrentValue and task.wait(1) do
+             AutoNeonPets()
+          end
+       end,
     })
-
+    
     AutoMegaToggle = Tab:CreateToggle({
-    Name = "Auto Mega",
-    CurrentValue = false,
-    Flag = "Toggle2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-    Callback = function(Value)
-        while AutoMegaToggle.CurrentValue and task.wait(1) do
-            AutoMegaPets()
-        end
-    end,
+       Name = "Auto Mega",
+       CurrentValue = false,
+       Flag = "Toggle2",
+       Callback = function(Value)
+          while AutoMegaToggle.CurrentValue and task.wait(1) do
+             AutoMegaPets()
+          end
+       end,
     })
-
-    PotionLabel = Tab:CreateLabel("TOTAL POTIONS: [" .. tostring(GetPotions()) .. "]", 13619902566)
-
+    
+    UseTinyPotToggle = Tab:CreateToggle({
+        Name = "Use Tiny Potion",
+        CurrentValue = false,
+        Flag = "Toggle2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+        Callback = function(Value)
+            useTinyAgePotion = Value
+        end,
+    })
+    
     Tab:CreateButton({
         Name = "Full Grown Pet(s)",
         Callback = function()
             local PetType = (PetTypeDropdown.CurrentOption)[1]
-
-            if GetPotions() == 0 then
-                Rayfield:Notify({
-                    Title = "No Potions Left!",
-                    Content = "Account has 0 potions",
-                    Duration = 6.5,
-                    Image = 4483362458,
-                })
+            if useTinyAgePotion then current_potion_type = "tiny_pet_age_potion" else current_potion_type = "pet_age_potion" end
+    
+            if GetPotions(current_potion_type) == 0 then
+                NotifyNoPotions()
             else
                 print("Aging up pets!")
                 for i, v in pairs(PetListDropdown.CurrentOption) do
@@ -500,384 +530,368 @@ if getgenv().RKey == "AutoPotGUI" then
                     local NumberOfPets = CountTable(CurrentINV)
                     print("Current:", NumberOfPets, CurrentPetName)
                     if NumberOfPets > 0 and task.wait() then
-                        for i, v in pairs(CurrentINV) do
-                            FGPet(i) 
+                        for i, v in pairs(CurrentINV) do   
+                            FGPet(i, current_potion_type)
+                            if GetPotions(current_potion_type) == 0 then
+                                NotifyNoPotions()
+                                break
+                            end
                         end
                         task.wait(1)
+                    end
+                    if GetPotions(current_potion_type) == 0 then
+                        break
                     end
                 end
             end
         end,
     })
-    repeat task.wait(1) until 1 == 2
-end
-
-print("Auto Utility System by Roleck -- v1.23 (new fixes)")
-repeat task.wait(1) until game:IsLoaded() and game:GetService("ReplicatedStorage"):FindFirstChild("ClientModules") and game:GetService("ReplicatedStorage").ClientModules:FindFirstChild("Core") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager").Apps:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp"):FindFirstChild("Whiteout")
-local RS = game:GetService("ReplicatedStorage")
-local ReplicatedStorage = RS
-local ClientData = require(RS.ClientModules.Core.ClientData)
-local RouterClient = require(RS.ClientModules.Core:WaitForChild("RouterClient"):WaitForChild("RouterClient"))
-local Main_Menu = require(RS.ClientModules.Core.UIManager.Apps.MainMenuApp)
-local Player = game:GetService("Players").LocalPlayer
-local VirtualInputManager = game:GetService("VirtualInputManager")
-
-local Fusion = loadstring(game:HttpGet("https://raw.githubusercontent.com/Arroz-con/ShittyHub/main/Modules/Fusion.lua"))()
-
-Player.PlayerGui.DialogApp.Enabled = false
-
-game.Players.LocalPlayer.Idled:Connect(function() 
-    game:GetService("VirtualUser"):Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame) 
-    task.wait(1)
-    game:GetService("VirtualUser"):Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame) 
-end)
-
-for i, v in pairs(debug.getupvalue(RouterClient.init, 7)) do
-    v.Name = i
-end
-
-function findPetID(petName)
-    for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
-        if type(entry) == "table" and string.lower(entry.name) == string.lower(petName) then
-            return entry.id
-        end
+    
+    PotionLabel = Tab:CreateLabel("TOTAL POTIONS: " .. tostring(GetPotions("pet_age_potion")), 13619902566)
+    TinyPotionLabel = Tab:CreateLabel("TOTAL TINY POTIONS: " .. tostring(GetPotions("tiny_pet_age_potion")), 18853094132)
+else
+    print("Auto Utility System by Roleck -- v1.30 (instant potion)")
+    repeat task.wait(1) until game:IsLoaded() and game:GetService("ReplicatedStorage"):FindFirstChild("ClientModules") and game:GetService("ReplicatedStorage").ClientModules:FindFirstChild("Core") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager").Apps:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp"):FindFirstChild("Whiteout")
+    local RS = game:GetService("ReplicatedStorage")
+    local ReplicatedStorage = RS
+    local ClientData = require(RS.ClientModules.Core.ClientData)
+    local RouterClient = require(RS.ClientModules.Core:WaitForChild("RouterClient"):WaitForChild("RouterClient"))
+    local Main_Menu = require(RS.ClientModules.Core.UIManager.Apps.MainMenuApp)
+    local Player = game:GetService("Players").LocalPlayer
+    local VirtualInputManager = game:GetService("VirtualInputManager")
+    
+    local Fusion = loadstring(game:HttpGet("https://raw.githubusercontent.com/Arroz-con/ShittyHub/main/Modules/Fusion.lua"))()
+    
+    current_potion_type = nil
+    
+    Player.PlayerGui.DialogApp.Enabled = false
+    
+    game.Players.LocalPlayer.Idled:Connect(function() 
+        game:GetService("VirtualUser"):Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame) 
+        task.wait(1)
+        game:GetService("VirtualUser"):Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame) 
+    end)
+    
+    for i, v in pairs(debug.getupvalue(RouterClient.init, 7)) do
+        v.Name = i
     end
-    return nil
-end
-
-function CheckPetRarity(pn)
-    for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
-        if type(entry) == "table" and string.lower(entry.name) == string.lower(pn) then
-            if entry.rarity == "common" then
-                return "Common"
-            elseif entry.rarity == "uncommon" then 
-                return "Uncommon"
-            elseif entry.rarity == "rare" then 
-                return "Rare"
-            elseif entry.rarity == "ultra_rare" then 
-                return "Ultra Rare"
-            elseif entry.rarity == "legendary" then 
-                return "Legendary"
+    
+    function findPetID(petName)
+        for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
+            if type(entry) == "table" and string.lower(entry.name) == string.lower(petName) then
+                return entry.id
+            end
+        end
+        return nil
+    end
+    
+    function CheckPetRarity(pn)
+        for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
+            if type(entry) == "table" and string.lower(entry.name) == string.lower(pn) then
+                if entry.rarity == "common" then
+                    return "Common"
+                elseif entry.rarity == "uncommon" then 
+                    return "Uncommon"
+                elseif entry.rarity == "rare" then 
+                    return "Rare"
+                elseif entry.rarity == "ultra_rare" then 
+                    return "Ultra Rare"
+                elseif entry.rarity == "legendary" then 
+                    return "Legendary"
+                end
             end
         end
     end
-end
-
-function InvEmpty()
-    for i,v in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
-        if PetMatch(v.id) then 
-            return false
-        end
-    end
-    return true
-end
-
-function FireButton(PassOn, dialogFramePass)
-    task.wait()
-    local dialogFrame = dialogFramePass or "NormalDialog"
-    for i, v in pairs(Player.PlayerGui.DialogApp.Dialog[dialogFrame].Buttons:GetDescendants()) do
-        if v.Name == "TextLabel" then
-            if v.Text == PassOn then
-                task.wait(2)
-                firesignal(v.Parent.Parent.MouseButton1Down)
-                firesignal(v.Parent.Parent.MouseButton1Click)
-                firesignal(v.Parent.Parent.MouseButton1Up)
-                break
+    
+    function InvEmpty()
+        for i,v in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
+            if PetMatch(v.id) then 
+                return false
             end
         end
-    end
-end
-
-function clickGuiButton(button: Instance, xOffset: number, yOffset: number)
-    print(button)
-    if typeof(button) ~= "Instance" then print("button is not a Instance") return end
-    local xOffset = xOffset or 60
-    local yOffset = yOffset or 60
-    print(button.AbsolutePosition.X)
-    task.wait()
-    VirtualInputManager:SendMouseButtonEvent(button.AbsolutePosition.X + xOffset, button.AbsolutePosition.Y + yOffset, 0, true, game, 1)
-    task.wait()
-    VirtualInputManager:SendMouseButtonEvent(button.AbsolutePosition.X + xOffset, button.AbsolutePosition.Y + yOffset, 0, false, game, 1)
-    task.wait()
-end
-
-function dailyLoginAppClick()
-    if not Player.PlayerGui.DailyLoginApp.Enabled then return end
-    Player.PlayerGui.DailyLoginApp:WaitForChild("Frame")
-    Player.PlayerGui.DailyLoginApp.Frame:WaitForChild("Body")
-    Player.PlayerGui.DailyLoginApp.Frame.Body:WaitForChild("Buttons")
-    for _, v in Player.PlayerGui.DailyLoginApp.Frame.Body.Buttons:GetDescendants() do
-        if v.Name == "TextLabel" then
-            if v.Text == "CLOSE" then
-                clickGuiButton(v.Parent.Parent) -- Close button
-                task.wait(1)
-            elseif v.Text == "CLAIM!" then
-                -- clickGuiButton(v.Parent.Parent) -- Claim button
-                -- task.wait(.1)
-                -- clickGuiButton(v.Parent.Parent) -- Close button
-                -- task.wait(1)
-                firesignal(v.Parent.Parent.MouseButton1Down)
-                firesignal(v.Parent.Parent.MouseButton1Click)
-                firesignal(v.Parent.Parent.MouseButton1Up) --claim button
-                task.wait(.2)
-                firesignal(v.Parent.Parent.MouseButton1Down)
-                firesignal(v.Parent.Parent.MouseButton1Click)
-                firesignal(v.Parent.Parent.MouseButton1Up) --close button
-            end
-        end
-    end
-end
-
-function CheckPetEquip()
-    if require(game.ReplicatedStorage.ClientModules.Core.ClientData).get("pet_char_wrappers")[1] then
         return true
-    else
-        return false
     end
-end
-
-function CheckPetEquipID(id)
-    if require(game.ReplicatedStorage.ClientModules.Core.ClientData).get("pet_char_wrappers")[1] then
-        if id == require(game.ReplicatedStorage.ClientModules.Core.ClientData).get("pet_char_wrappers")[1].pet_unique then
+    
+    function FireButton(PassOn, dialogFramePass)
+        task.wait()
+        local dialogFrame = dialogFramePass or "NormalDialog"
+        for i, v in pairs(Player.PlayerGui.DialogApp.Dialog[dialogFrame].Buttons:GetDescendants()) do
+            if v.Name == "TextLabel" then
+                if v.Text == PassOn then
+                    task.wait(2)
+                    firesignal(v.Parent.Parent.MouseButton1Down)
+                    firesignal(v.Parent.Parent.MouseButton1Click)
+                    firesignal(v.Parent.Parent.MouseButton1Up)
+                    break
+                end
+            end
+        end
+    end
+    
+    function clickGuiButton(button: Instance, xOffset: number, yOffset: number)
+        print(button)
+        if typeof(button) ~= "Instance" then print("button is not a Instance") return end
+        local xOffset = xOffset or 60
+        local yOffset = yOffset or 60
+        print(button.AbsolutePosition.X)
+        task.wait()
+        VirtualInputManager:SendMouseButtonEvent(button.AbsolutePosition.X + xOffset, button.AbsolutePosition.Y + yOffset, 0, true, game, 1)
+        task.wait()
+        VirtualInputManager:SendMouseButtonEvent(button.AbsolutePosition.X + xOffset, button.AbsolutePosition.Y + yOffset, 0, false, game, 1)
+        task.wait()
+    end
+    
+    function dailyLoginAppClick()
+        if not Player.PlayerGui.DailyLoginApp.Enabled then return end
+        Player.PlayerGui.DailyLoginApp:WaitForChild("Frame")
+        Player.PlayerGui.DailyLoginApp.Frame:WaitForChild("Body")
+        Player.PlayerGui.DailyLoginApp.Frame.Body:WaitForChild("Buttons")
+        for _, v in Player.PlayerGui.DailyLoginApp.Frame.Body.Buttons:GetDescendants() do
+            if v.Name == "TextLabel" then
+                if v.Text == "CLOSE" then
+                    clickGuiButton(v.Parent.Parent) -- Close button
+                    task.wait(1)
+                elseif v.Text == "CLAIM!" then
+                    -- clickGuiButton(v.Parent.Parent) -- Claim button
+                    -- task.wait(.1)
+                    -- clickGuiButton(v.Parent.Parent) -- Close button
+                    -- task.wait(1)
+                    firesignal(v.Parent.Parent.MouseButton1Down)
+                    firesignal(v.Parent.Parent.MouseButton1Click)
+                    firesignal(v.Parent.Parent.MouseButton1Up) --claim button
+                    task.wait(.2)
+                    firesignal(v.Parent.Parent.MouseButton1Down)
+                    firesignal(v.Parent.Parent.MouseButton1Click)
+                    firesignal(v.Parent.Parent.MouseButton1Up) --close button
+                end
+            end
+        end
+    end
+    
+    function CheckPetEquip()
+        if require(game.ReplicatedStorage.ClientModules.Core.ClientData).get("pet_char_wrappers")[1] then
             return true
         else
             return false
         end
-    else
-        return false
     end
-end
-
-function CheckFG(PetID)
-    for i,v in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
-        if i == PetID then        
-            if v.properties.age == 6 then
+    
+    function CheckPetEquipID(id)
+        if require(game.ReplicatedStorage.ClientModules.Core.ClientData).get("pet_char_wrappers")[1] then
+            if id == require(game.ReplicatedStorage.ClientModules.Core.ClientData).get("pet_char_wrappers")[1].pet_unique then
                 return true
             else
                 return false
             end
+        else
+            return false
         end
     end
-end
-
-function findPetID(petName)
-    for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
-        if type(entry) == "table" and string.lower(entry.name) == string.lower(petName) then
-            return entry.id
-        end
-    end
-    return nil
-end
-function findPetName(PetID)
-    for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
-        if type(entry) == "table" and string.lower(entry.id) == string.lower(PetID) then
-            return entry.name
-        end
-    end
-    return nil
-end
-function findItemID(itemName, itemType)
-    for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB)[itemType]) do
-        if type(entry) == "table" and string.lower(entry.name) == string.lower(itemName) then
-            return entry.id
-        end
-    end
-    return nil
-end
-
-function findItemName(itemID, itemType)
-    for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB)[itemType]) do
-        if type(entry) == "table" and string.lower(entry.id) == string.lower(itemID) then
-            return entry.name
-        end
-    end
-    return nil
-end
-
-function CheckPetRarity(PetName)
-    for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
-        if type(entry) == "table" and string.lower(entry.name) == string.lower(PetName) then
-            if entry.rarity == "common" then
-                return "Common"
-            elseif entry.rarity == "uncommon" then 
-                return "Uncommon"
-            elseif entry.rarity == "rare" then 
-                return "Rare"
-            elseif entry.rarity == "ultra_rare" then 
-                return "Ultra Rare"
-            elseif entry.rarity == "legendary" then 
-                return "Legendary"
+    
+    function CheckFG(PetID)
+        for i,v in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
+            if i == PetID then        
+                if v.properties.age == 6 then
+                    return true
+                else
+                    return false
+                end
             end
         end
     end
-end
-
-function CheckEgg(PetID)
-    for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
-        if entry.id == PetID then
-            if entry.is_egg == true then
-                return true
+    
+    function findPetID(petName)
+        for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
+            if type(entry) == "table" and string.lower(entry.name) == string.lower(petName) then
+                return entry.id
+            end
+        end
+        return nil
+    end
+    function findPetName(PetID)
+        for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
+            if type(entry) == "table" and string.lower(entry.id) == string.lower(PetID) then
+                return entry.name
+            end
+        end
+        return nil
+    end
+    function findItemID(itemName, itemType)
+        for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB)[itemType]) do
+            if type(entry) == "table" and string.lower(entry.name) == string.lower(itemName) then
+                return entry.id
+            end
+        end
+        return nil
+    end
+    
+    function findItemName(itemID, itemType)
+        for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB)[itemType]) do
+            if type(entry) == "table" and string.lower(entry.id) == string.lower(itemID) then
+                return entry.name
+            end
+        end
+        return nil
+    end
+    
+    function CheckPetRarity(PetName)
+        for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
+            if type(entry) == "table" and string.lower(entry.name) == string.lower(PetName) then
+                if entry.rarity == "common" then
+                    return "Common"
+                elseif entry.rarity == "uncommon" then 
+                    return "Uncommon"
+                elseif entry.rarity == "rare" then 
+                    return "Rare"
+                elseif entry.rarity == "ultra_rare" then 
+                    return "Ultra Rare"
+                elseif entry.rarity == "legendary" then 
+                    return "Legendary"
+                end
             end
         end
     end
-    return false
-end
-
-function RoT(t) return t[math.random(1, #t)] end
-
-function isInTable(tableA, item)
-    for i, v in pairs(tableA) do
-        if v == item then return true end
+    
+    function CheckEgg(PetID)
+        for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
+            if entry.id == PetID then
+                if entry.is_egg == true then
+                    return true
+                end
+            end
+        end
+        return false
     end
-    return false
-end
-
-function PetMatch(petID)
-    if (ATConfig.PetName == findPetName(petID)) 
-    or isInTable(ATConfig.PetsToTrade, findPetName(petID)) then
-        return true
+    
+    function RoT(t) return t[math.random(1, #t)] end
+    
+    function isInTable(tableA, item)
+        for i, v in pairs(tableA) do
+            if v == item then return true end
+        end
+        return false
     end
-end
-
-function IsEatingOrDrinking()
-    a = require(game:GetService("ReplicatedStorage").ClientModules.Game.PetEntities.PetEntityManager)
-    a = a.get_local_owned_pet_entities()[1]["active_reactions"]
-
-    if a.EatReaction then
-        -- a.EatReaction.is_potion
-        -- .is_drink
-        return true
-    end
-    return false
-end
-
-function GetPotions()
-    local Foods = {}
-    for l,o in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.food) do
-        if o.id == "pet_age_potion" then
-            table.insert(Foods, l)
+    
+    function PetMatch(petID)
+        if (ATConfig.PetName == findPetName(petID)) 
+        or isInTable(ATConfig.PetsToTrade, findPetName(petID)) then
+            return true
         end
     end
-    return #Foods
-end
-
-function FGPet(petID)
-    game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("ToolAPI/Equip"):InvokeServer(petID)
-    repeat task.wait() until ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1]
-
-    breakLoop = false
-    while not breakLoop and task.wait() do
-        for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
-            if i == petID and v.properties.age < 6 then
-                print("Waiting till oldAge & oldPercentage is updated")
-                repeat task.wait(0.05) 
-                    _G.oldAge = ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["age"]
-                    _G.oldPercentage = ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["percentage"]
-                until _G.oldAge == ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["age"] and _G.oldPercentage == ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["percentage"]
-                
-                local Foods = {}
-                for l,o in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.food) do
-                    if o.id == "pet_age_potion" then        
-                        table.insert(Foods, l)
+    
+    function IsEatingOrDrinking()
+        a = require(game:GetService("ReplicatedStorage").ClientModules.Game.PetEntities.PetEntityManager)
+        a = a.get_local_owned_pet_entities()[1]["active_reactions"]
+    
+        if a.EatReaction then
+            -- a.EatReaction.is_potion
+            -- .is_drink
+            return true
+        end
+        return false
+    end
+    
+    function GetPotions(potionType)
+        local Foods = {}
+        for l,o in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.food) do
+            if o.id == potionType then
+                table.insert(Foods, l)
+            end
+        end
+        return #Foods
+    end
+    
+    function FGPet(petID, potionType)
+        if not CheckFG(petID) then
+            game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("ToolAPI/Equip"):InvokeServer(petID)
+            repeat task.wait() until ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1]
+    
+            while task.wait() do
+                if ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["age"] < 6 then
+                    print("Waiting till oldAge & oldPercentage is updated")
+                    repeat task.wait(0.05) 
+                        oldAge = ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["age"]
+                        oldPercentage = ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["percentage"]
+                    until oldAge == ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["age"] and oldPercentage == ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression["percentage"]
+                    
+                    local Foods = {}
+                    for l,o in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.food) do
+                        if o.id == potionType then
+                            table.insert(Foods, l)
+                        end
                     end
-                end
-
-                if #Foods == 0 then
-                    breakLoop = true
-                    break
-                end
-                
-                if CheckPetEquip() and CheckPetEquipID(i) and not CheckFG(i) then
-                    petID = ClientData.get("pet_char_wrappers")[1]["pet_unique"]
-
-                    RS.API:WaitForChild("PetObjectAPI/CreatePetObject"):InvokeServer("__Enum_PetObjectCreatorType_2", {["pet_unique"] = petID, ["unique_id"] = RoT(Foods)})
-                    local st = tick()
-                    repeat task.wait() until IsEatingOrDrinking() or (tick() - st >= 10)
+    
+                    if #Foods == 0 then 
+                        if potionType == "tiny_pet_age_potion" then 
+                            ATConfig.useTinyAgePotion = false
+                            current_potion_type = "pet_age_potion"
+                            return FGPet(petID, "pet_age_potion")
+                        else
+                            return
+                        end
+                    end
+                    
+                    if CheckPetEquipID(petID) and not CheckFG(petID) then
+                        while (not (workspace.PetObjects:FindFirstChild("AgePotion") or workspace.PetObjects:FindFirstChild("TinyAgePotion"))) or GetPotions(potionType) == 0 do
+                            local success, responseOrError = pcall(function()
+                                return RouterClient.get("PetObjectAPI/CreatePetObject"):InvokeServer(
+                                    "__Enum_PetObjectCreatorType_2",
+                                    {
+                                        ["pet_unique"] = petID,
+                                        ["unique_id"] = RoT(Foods)
+                                    }
+                                )
+                            end)
+                            task.wait(0.1)
+                        end
+                        RS.API:WaitForChild("PetAPI/ConsumeFoodObject"):FireServer(workspace.PetObjects:FindFirstChildWhichIsA("Model"), petID)
+    
+                        local StartTick = tick()
+                        repeat task.wait() until
+                        ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.age == 6 
+                        or ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.age ~= oldAge
+                        or ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.percentage ~= oldPercentage or (tick() - StartTick >= 10)
+                    else
+                        break
+                    end
+    
+                    print("Completed Wait till next progression")
                 else
                     break
                 end
-                task.wait(0.1)
-                StartTick = tick()
-                repeat task.wait() until
-               (ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.age == 6 
-                or ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.age ~= _G.oldAge
-                or ClientData.get_data()[game.Players.LocalPlayer.Name].pet_char_wrappers[1].pet_progression.percentage ~= _G.oldPercentage or (tick() - StartTick >= 10))
-                and not IsEatingOrDrinking()
-                print("Completed Wait till next progression, eating status:", IsEatingOrDrinking())
-            elseif i == petID and v.properties.age == 6 then
-                breakLoop = true
-                break
             end
+            print("Pet Successfully FG : " .. petID)
+        else
+            print("Pet Not Found or Pet is Full Grown")
         end
     end
-    print("Pet Successfully FG : " .. petID)
-end
-
-function Optimizer()
-    print("-- Boost Performance Activated --")
-    UserSettings():GetService("UserGameSettings").MasterVolume = 0
-    local decalsyeeted = true
-    local g = game
-    local w = g.Workspace
-    local l = g.Lighting
-    local t = w.Terrain
-    sethiddenproperty(l,"Technology",2)
-    sethiddenproperty(t,"Decoration",false)
-    game:GetService("StarterGui"):SetCoreGuiEnabled(Enum.CoreGuiType.Chat,false)
-    t.WaterWaveSize = 0
-    t.WaterWaveSpeed = 0
-    t.WaterReflectance = 0
-    t.WaterTransparency = 0
-    l.GlobalShadows = 0
-    l.FogEnd = 9e9
-    l.Brightness = 0
-    settings().Rendering.QualityLevel = "0"
-    settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level04
-    task.wait()
-    for i, v in pairs(w:GetDescendants()) do
-        if v:IsA("BasePart") and not v:IsA("MeshPart") then
-            v.Material = "Plastic"
-            v.Reflectance = 0
-        elseif (v:IsA("Decal") or v:IsA("Texture")) and decalsyeeted then
-            v.Transparency = 1
-        elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
-            v.Lifetime = NumberRange.new(0)
-        elseif v:IsA("Explosion") then
-            v.BlastPressure = 1
-            v.BlastRadius = 1
-        elseif v:IsA("Fire") or v:IsA("SpotLight") or v:IsA("Smoke") or v:IsA("Sparkles") then
-            v.Enabled = false
-        elseif v:IsA("MeshPart") and decalsyeeted then
-            v.Material = "Plastic"
-            v.Reflectance = 0
-            v.TextureID = 10385902758728957
-        elseif v:IsA("SpecialMesh") and decalsyeeted  then
-            v.TextureId=0
-        elseif v:IsA("ShirtGraphic") and decalsyeeted then
-            v.Graphic=1
-        elseif (v:IsA("Shirt") or v:IsA("Pants")) and decalsyeeted then
-            v[v.ClassName.."Template"]=1
-            elseif v.Name == "Foilage" and v:IsA("Folder") then
-            v:Destroy()
-        elseif string.find(v.Name, "^Tree.*$") or string.find(v.Name, "Water") or string.find(v.Name, "^Bush.*$") or string.find(v.Name, "^grass.*$") then
-            task.wait()
-            v:Destroy()
-        elseif string.find(v.Name, "Model") or string.find(v.Name, "Debris") or string.find(v.Name, "Interactable") then
-            v:Destroy()	
-        end
-    end
-    for i = 1,#l:GetChildren() do
-        e=l:GetChildren()[i]
-        if e:IsA("BlurEffect") or e:IsA("SunRaysEffect") or e:IsA("ColorCorrectionEffect") or e:IsA("BloomEffect") or e:IsA("DepthOfFieldEffect") then
-            e.Enabled = false
-        end
-    end
-    w.DescendantAdded:Connect(function(v)
-        pcall(function()
+    
+    function Optimizer()
+        print("-- Boost Performance Activated --")
+        UserSettings():GetService("UserGameSettings").MasterVolume = 0
+        local decalsyeeted = true
+        local g = game
+        local w = g.Workspace
+        local l = g.Lighting
+        local t = w.Terrain
+        sethiddenproperty(l,"Technology",2)
+        sethiddenproperty(t,"Decoration",false)
+        game:GetService("StarterGui"):SetCoreGuiEnabled(Enum.CoreGuiType.Chat,false)
+        t.WaterWaveSize = 0
+        t.WaterWaveSpeed = 0
+        t.WaterReflectance = 0
+        t.WaterTransparency = 0
+        l.GlobalShadows = 0
+        l.FogEnd = 9e9
+        l.Brightness = 0
+        settings().Rendering.QualityLevel = "0"
+        settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level04
+        task.wait()
+        for i, v in pairs(w:GetDescendants()) do
             if v:IsA("BasePart") and not v:IsA("MeshPart") then
                 v.Material = "Plastic"
                 v.Reflectance = 0
-            elseif v:IsA("Decal") or v:IsA("Texture") and decalsyeeted then
+            elseif (v:IsA("Decal") or v:IsA("Texture")) and decalsyeeted then
                 v.Transparency = 1
             elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
                 v.Lifetime = NumberRange.new(0)
@@ -890,10 +904,10 @@ function Optimizer()
                 v.Material = "Plastic"
                 v.Reflectance = 0
                 v.TextureID = 10385902758728957
-            elseif v:IsA("SpecialMesh") and decalsyeeted then
+            elseif v:IsA("SpecialMesh") and decalsyeeted  then
                 v.TextureId=0
             elseif v:IsA("ShirtGraphic") and decalsyeeted then
-                v.ShirtGraphic=1
+                v.Graphic=1
             elseif (v:IsA("Shirt") or v:IsA("Pants")) and decalsyeeted then
                 v[v.ClassName.."Template"]=1
                 elseif v.Name == "Foilage" and v:IsA("Folder") then
@@ -901,28 +915,57 @@ function Optimizer()
             elseif string.find(v.Name, "^Tree.*$") or string.find(v.Name, "Water") or string.find(v.Name, "^Bush.*$") or string.find(v.Name, "^grass.*$") then
                 task.wait()
                 v:Destroy()
+            elseif string.find(v.Name, "Model") or string.find(v.Name, "Debris") or string.find(v.Name, "Interactable") then
+                v:Destroy()	
             end
+        end
+        for i = 1,#l:GetChildren() do
+            e=l:GetChildren()[i]
+            if e:IsA("BlurEffect") or e:IsA("SunRaysEffect") or e:IsA("ColorCorrectionEffect") or e:IsA("BloomEffect") or e:IsA("DepthOfFieldEffect") then
+                e.Enabled = false
+            end
+        end
+        w.DescendantAdded:Connect(function(v)
+            pcall(function()
+                if v:IsA("BasePart") and not v:IsA("MeshPart") then
+                    v.Material = "Plastic"
+                    v.Reflectance = 0
+                elseif v:IsA("Decal") or v:IsA("Texture") and decalsyeeted then
+                    v.Transparency = 1
+                elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+                    v.Lifetime = NumberRange.new(0)
+                elseif v:IsA("Explosion") then
+                    v.BlastPressure = 1
+                    v.BlastRadius = 1
+                elseif v:IsA("Fire") or v:IsA("SpotLight") or v:IsA("Smoke") or v:IsA("Sparkles") then
+                    v.Enabled = false
+                elseif v:IsA("MeshPart") and decalsyeeted then
+                    v.Material = "Plastic"
+                    v.Reflectance = 0
+                    v.TextureID = 10385902758728957
+                elseif v:IsA("SpecialMesh") and decalsyeeted then
+                    v.TextureId=0
+                elseif v:IsA("ShirtGraphic") and decalsyeeted then
+                    v.ShirtGraphic=1
+                elseif (v:IsA("Shirt") or v:IsA("Pants")) and decalsyeeted then
+                    v[v.ClassName.."Template"]=1
+                    elseif v.Name == "Foilage" and v:IsA("Folder") then
+                    v:Destroy()
+                elseif string.find(v.Name, "^Tree.*$") or string.find(v.Name, "Water") or string.find(v.Name, "^Bush.*$") or string.find(v.Name, "^grass.*$") then
+                    task.wait()
+                    v:Destroy()
+                end
+            end)
+            task.wait()
         end)
-        task.wait()
-    end)
+        
+        workspace.HouseInteriors.furniture:Destroy()
     
-    workspace.HouseInteriors.furniture:Destroy()
-
-    workspace.Terrain.WaterReflectance = 0
-    workspace.Terrain.WaterTransparency = 1
-    workspace.Terrain.WaterWaveSize = 0
-    workspace.Terrain.WaterWaveSpeed = 0
-
-    for i,v in pairs(game.Lighting:GetChildren()) do 
-        if v:IsA("Model") then
-            v:Destroy()
-        elseif v.Name:match("Weather") then 
-            v:Destroy()
-        end 
-    end
-    game.Lighting.Brightness = 0
-
-    game.Lighting.ChildAdded:Connect(function()
+        workspace.Terrain.WaterReflectance = 0
+        workspace.Terrain.WaterTransparency = 1
+        workspace.Terrain.WaterWaveSize = 0
+        workspace.Terrain.WaterWaveSpeed = 0
+    
         for i,v in pairs(game.Lighting:GetChildren()) do 
             if v:IsA("Model") then
                 v:Destroy()
@@ -931,228 +974,240 @@ function Optimizer()
             end 
         end
         game.Lighting.Brightness = 0
+    
+        game.Lighting.ChildAdded:Connect(function()
+            for i,v in pairs(game.Lighting:GetChildren()) do 
+                if v:IsA("Model") then
+                    v:Destroy()
+                elseif v.Name:match("Weather") then 
+                    v:Destroy()
+                end 
+            end
+            game.Lighting.Brightness = 0
+        end)
+    end
+    
+    RoleChooserDialogConnection = Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog:GetPropertyChangedSignal("Visible"):Connect(function()
+        task.wait()
+        if Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Visible then
+            -- firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.ChooseParent.MouseButton1Click)
+            firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Down)
+            firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Click)
+            firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Up)
+            RoleChooserDialogConnection:Disconnect()
+        end
     end)
-end
-
-RoleChooserDialogConnection = Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog:GetPropertyChangedSignal("Visible"):Connect(function()
-    task.wait()
-    if Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Visible then
-        -- firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.ChooseParent.MouseButton1Click)
-        firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Down)
+    
+    --// Clicks no robux product button
+    RobuxProductDialogConnection1 = Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog:GetPropertyChangedSignal("Visible"):Connect(function()
+        if not Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Visible then return end
+        Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog:WaitForChild("Buttons")
+        task.wait()
+        for _, v in Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Buttons:GetDescendants() do
+            if v.Name == "TextLabel" then
+                if v.Text == "No Thanks" then
+                    -- clickGuiButton(v.Parent.Parent) -- no thanks button
+                    firesignal(v.Parent.Parent.MouseButton1Down)
+                    firesignal(v.Parent.Parent.MouseButton1Click)
+                    firesignal(v.Parent.Parent.MouseButton1Up)
+                    RobuxProductDialogConnection1:Disconnect()
+                end
+            end
+        end
+    end)
+    
+    
+    RobuxProductDialogConnection2 = Player.PlayerGui.DialogApp.Dialog:GetPropertyChangedSignal("Visible"):Connect(function()
+        if not Player.PlayerGui.DialogApp.Dialog.Visible then return end
+        Player.PlayerGui.DialogApp.Dialog:WaitForChild("RobuxProductDialog")
+        if not Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Visible then return end
+        Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog:WaitForChild("Buttons")
+        task.wait()
+        for _, v in Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Buttons:GetDescendants() do
+            if v.Name == "TextLabel" then
+                if v.Text == "No Thanks" then
+                    -- clickGuiButton(v.Parent.Parent) -- no thanks button
+                    firesignal(v.Parent.Parent.MouseButton1Down)
+                    firesignal(v.Parent.Parent.MouseButton1Click)
+                    firesignal(v.Parent.Parent.MouseButton1Up)
+                    RobuxProductDialogConnection2:Disconnect()
+                end
+            end
+        end
+    end)
+    
+    
+    DailyClaimConnection = Player.PlayerGui.DailyLoginApp:GetPropertyChangedSignal("Enabled"):Connect(function()
+        dailyLoginAppClick()
+    end)
+    
+    if Player.PlayerGui.NewsApp.Enabled then
+        local AbsPlay = Player.PlayerGui.NewsApp
+            :WaitForChild("EnclosingFrame")
+            :WaitForChild("MainFrame")
+            :WaitForChild("Contents")
+            :WaitForChild("PlayButton")
+    
+        firesignal(AbsPlay.MouseButton1Down)
+        firesignal(AbsPlay.MouseButton1Click)
+        firesignal(AbsPlay.MouseButton1Up)
+    end
+    
+    if Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Visible then --Baby, ChooseParent
         firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Click)
-        firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Up)
         RoleChooserDialogConnection:Disconnect()
     end
-end)
-
---// Clicks no robux product button
-RobuxProductDialogConnection1 = Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog:GetPropertyChangedSignal("Visible"):Connect(function()
-    if not Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Visible then return end
-    Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog:WaitForChild("Buttons")
-    task.wait()
-    for _, v in Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Buttons:GetDescendants() do
-        if v.Name == "TextLabel" then
-            if v.Text == "No Thanks" then
-                -- clickGuiButton(v.Parent.Parent) -- no thanks button
-                firesignal(v.Parent.Parent.MouseButton1Down)
-                firesignal(v.Parent.Parent.MouseButton1Click)
-                firesignal(v.Parent.Parent.MouseButton1Up)
-                RobuxProductDialogConnection1:Disconnect()
-            end
-        end
-    end
-end)
-
-
-RobuxProductDialogConnection2 = Player.PlayerGui.DialogApp.Dialog:GetPropertyChangedSignal("Visible"):Connect(function()
-    if not Player.PlayerGui.DialogApp.Dialog.Visible then return end
-    Player.PlayerGui.DialogApp.Dialog:WaitForChild("RobuxProductDialog")
-    if not Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Visible then return end
-    Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog:WaitForChild("Buttons")
-    task.wait()
-    for _, v in Player.PlayerGui.DialogApp.Dialog.RobuxProductDialog.Buttons:GetDescendants() do
-        if v.Name == "TextLabel" then
-            if v.Text == "No Thanks" then
-                -- clickGuiButton(v.Parent.Parent) -- no thanks button
-                firesignal(v.Parent.Parent.MouseButton1Down)
-                firesignal(v.Parent.Parent.MouseButton1Click)
-                firesignal(v.Parent.Parent.MouseButton1Up)
-                RobuxProductDialogConnection2:Disconnect()
-            end
-        end
-    end
-end)
-
-
-DailyClaimConnection = Player.PlayerGui.DailyLoginApp:GetPropertyChangedSignal("Enabled"):Connect(function()
+    
+    repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     dailyLoginAppClick()
-end)
-
-if Player.PlayerGui.NewsApp.Enabled then
-    local AbsPlay = Player.PlayerGui.NewsApp
-        :WaitForChild("EnclosingFrame")
-        :WaitForChild("MainFrame")
-        :WaitForChild("Contents")
-        :WaitForChild("PlayButton")
-
-    firesignal(AbsPlay.MouseButton1Down)
-    firesignal(AbsPlay.MouseButton1Click)
-    firesignal(AbsPlay.MouseButton1Up)
-end
-
-if Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Visible then --Baby, ChooseParent
-    firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Click)
-    RoleChooserDialogConnection:Disconnect()
-end
-
-repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-dailyLoginAppClick()
-
-repeat task.wait(2) until game:GetService("Players")
-if game.Players.LocalPlayer.Name == ATConfig.MainAccUsername then
-    print("Main Account")
-    spawn(function()
+    
+    repeat task.wait(2) until game:GetService("Players")
+    if game.Players.LocalPlayer.Name == ATConfig.MainAccUsername then
+        print("Main Account")
+        spawn(function()
+            while task.wait() do
+                for i, v in pairs(game.Players:GetChildren()) do
+                    game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/AcceptOrDeclineTradeRequest"):InvokeServer(v, true)
+                end
+            end
+        end)
+    
         while task.wait() do
-            for i, v in pairs(game.Players:GetChildren()) do
-                game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/AcceptOrDeclineTradeRequest"):InvokeServer(v, true)
+            repeat task.wait() until game:GetService("Players").LocalPlayer.PlayerGui.TradeApp.Frame.Visible
+            while game:GetService("Players").LocalPlayer.PlayerGui.TradeApp.Frame.Visible do
+                game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/AcceptNegotiation"):FireServer()
+                task.wait(0.1)
+                game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/ConfirmTrade"):FireServer()
+                task.wait(0.1)
             end
         end
-    end)
-
-    while task.wait() do
-        repeat task.wait() until game:GetService("Players").LocalPlayer.PlayerGui.TradeApp.Frame.Visible
-        while game:GetService("Players").LocalPlayer.PlayerGui.TradeApp.Frame.Visible do
-            game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/AcceptNegotiation"):FireServer()
-            task.wait(0.1)
-            game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/ConfirmTrade"):FireServer()
-            task.wait(0.1)
+    else
+    
+        --- Sender Account
+        print("Sender Account")
+        Optimizer()
+        if ATConfig.buyIceTray then
+            local curr = (ClientData.get_data()[game.Players.LocalPlayer.Name][require(RS.SharedModules.SharedDB.AltCurrencyData)["name"]] or 0)
+            local numOfPets = math.floor(curr / 18000)
+    
+            while numOfPets > 0 and task.wait() do
+                local batchSize = math.min(numOfPets, 99)
+                RS.API:WaitForChild("ShopAPI/BuyItem"):InvokeServer("gifts", findItemID("Ice Tray", "gifts"), {["buy_count"] = batchSize})
+                numOfPets = numOfPets - batchSize
+            end
         end
-    end
-else
-
-    --- Sender Account
-    print("Sender Account")
-    Optimizer()
-    if ATConfig.buyIceTray then
-        local curr = (ClientData.get_data()[game.Players.LocalPlayer.Name][require(RS.SharedModules.SharedDB.AltCurrencyData)["name"]] or 0)
-        local numOfPets = math.floor(curr / 18000)
-
-        while numOfPets > 0 and task.wait() do
-            local batchSize = math.min(numOfPets, 99)
-            RS.API:WaitForChild("ShopAPI/BuyItem"):InvokeServer("gifts", findItemID("Ice Tray", "gifts"), {["buy_count"] = batchSize})
-            numOfPets = numOfPets - batchSize
+    
+        if ATConfig.openIceTray then
+            iceTrayID = findItemID("Ice Tray", "gifts")
+            for i = 1, 3 do
+                for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.gifts) do
+                    if v.id == iceTrayID then
+                        RS.API:WaitForChild("LootBoxAPI/ExchangeItemForReward"):InvokeServer(iceTrayID, i)
+                        task.wait()
+                    end
+                end
+            end
         end
-    end
-
-    if ATConfig.openIceTray then
-        iceTrayID = findItemID("Ice Tray", "gifts")
-        for i = 1, 3 do
-            for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.gifts) do
-                if v.id == iceTrayID then
-                    RS.API:WaitForChild("LootBoxAPI/ExchangeItemForReward"):InvokeServer(iceTrayID, i)
+    
+        if ATConfig.buyPet then
+            print("Buy Pet : Enabled")
+            if ATConfig.CurrencyName == "Bucks" then
+                CurrencyC = ClientData.get_data()[game.Players.LocalPlayer.Name].money
+            elseif ATConfig.CurrencyName == "Event" then
+                CurrencyC = (ClientData.get_data()[game.Players.LocalPlayer.Name][require(game:GetService("ReplicatedStorage").SharedModules.SharedDB.AltCurrencyData)["name"]] or 0)
+            end
+    
+            NumberOfPets = math.floor(CurrencyC/ATConfig.CostC)
+            while NumberOfPets > 0 and task.wait() do
+                local batchSize = math.min(NumberOfPets, 99)
+                RS.API:WaitForChild("ShopAPI/BuyItem"):InvokeServer("pets", findPetID(ATConfig.PetName), {["buy_count"] = batchSize})
+                NumberOfPets = NumberOfPets - batchSize
+            end
+        end
+    
+        -- Aging Pets
+        if ATConfig.AgePets then
+            print("Starting Age Pots")
+            if ATConfig.useTinyAgePotion then current_potion_type = "tiny_pet_age_potion" else current_potion_type = "pet_age_potion" end
+            if GetPotions(current_potion_type) > 0 then
+                for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
+                    if isInTable(ATConfig.PetsToAge, findPetName(v.id)) then
+                        FGPet(i, current_potion_type)  
+                    end
                     task.wait()
                 end
             end
-        end
-    end
-
-    if ATConfig.buyPet then
-        print("Buy Pet : Enabled")
-        if ATConfig.CurrencyName == "Bucks" then
-            CurrencyC = ClientData.get_data()[game.Players.LocalPlayer.Name].money
-        elseif ATConfig.CurrencyName == "Event" then
-            CurrencyC = (ClientData.get_data()[game.Players.LocalPlayer.Name][require(game:GetService("ReplicatedStorage").SharedModules.SharedDB.AltCurrencyData)["name"]] or 0)
-        end
-
-        NumberOfPets = math.floor(CurrencyC/ATConfig.CostC)
-        while NumberOfPets > 0 and task.wait() do
-            local batchSize = math.min(NumberOfPets, 99)
-            RS.API:WaitForChild("ShopAPI/BuyItem"):InvokeServer("pets", findPetID(ATConfig.PetName), {["buy_count"] = batchSize})
-            NumberOfPets = NumberOfPets - batchSize
-        end
-    end
-
-    -- Aging Pets
-    if ATConfig.AgePets then
-        print("Starting Age Pots")
-        for i,v in pairs(require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
-            if isInTable(ATConfig.PetsToAge, findPetName(v.id)) then
-                if GetPotions() > 0 then
-                    FGPet(i)
-                end
+    
+            if ATConfig.autoFuse then
+                Fusion:MakeMega(false)
+                Fusion:MakeMega(true)
             end
-            task.wait()
         end
-
-        if ATConfig.autoFuse then
-            Fusion:MakeMega(false)
-            Fusion:MakeMega(true)
-        end
-    end
-
-    repeat
-        if game.Players:FindFirstChild(ATConfig.MainAccUsername) and (not InvEmpty()) then
-            print("Waiting for Trade Accept")
-            repeat task.wait(1)
-                RS.API:WaitForChild("TradeAPI/SendTradeRequest"):FireServer(game:GetService("Players"):WaitForChild(ATConfig.MainAccUsername))
-            until game:GetService("Players").LocalPlayer.PlayerGui.TradeApp.Frame.Visible
-
-            -- Add Pets
-            count = 0
-            for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
-                if PetMatch(v.id) then
-                    RS.API:FindFirstChild("TradeAPI/AddItemToOffer"):FireServer(v.unique)
-                    count += 1
-                    if count >= 18 then break end
-                end
-            end
-
-            if ATConfig.tradeIceTray then
-                for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.gifts) do
-                    if v.id == findItemID("Ice Tray", "gifts") then
+    
+        repeat
+            if game.Players:FindFirstChild(ATConfig.MainAccUsername) and (not InvEmpty()) then
+                print("Waiting for Trade Accept")
+                repeat task.wait(1)
+                    RS.API:WaitForChild("TradeAPI/SendTradeRequest"):FireServer(game:GetService("Players"):WaitForChild(ATConfig.MainAccUsername))
+                until game:GetService("Players").LocalPlayer.PlayerGui.TradeApp.Frame.Visible
+    
+                -- Add Pets
+                count = 0
+                for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
+                    if PetMatch(v.id) then
                         RS.API:FindFirstChild("TradeAPI/AddItemToOffer"):FireServer(v.unique)
                         count += 1
                         if count >= 18 then break end
                     end
                 end
+    
+                if ATConfig.tradeIceTray then
+                    for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.gifts) do
+                        if v.id == findItemID("Ice Tray", "gifts") then
+                            RS.API:FindFirstChild("TradeAPI/AddItemToOffer"):FireServer(v.unique)
+                            count += 1
+                            if count >= 18 then break end
+                        end
+                    end
+                end
+    
+                -- Accept/Confirm
+                while game.Players.LocalPlayer.PlayerGui.TradeApp.Frame.Visible do
+                    game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/AcceptNegotiation"):FireServer()
+                    wait(0.1)
+                    game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/ConfirmTrade"):FireServer()
+                    wait(0.1)
+                end
+                print("Trade Ended")
             end
-
-            -- Accept/Confirm
-            while game.Players.LocalPlayer.PlayerGui.TradeApp.Frame.Visible do
-                game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/AcceptNegotiation"):FireServer()
-                wait(0.1)
-                game:GetService("ReplicatedStorage"):WaitForChild("API"):WaitForChild("TradeAPI/ConfirmTrade"):FireServer()
-                wait(0.1)
-            end
-            print("Trade Ended")
-        end
-        task.wait(1.5)
-        print("Waiting for acc")
-    until InvEmpty()
-
-    local ScreenGui = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
-    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    ScreenGui.Name = "RoloxBotOverlay"
-    ScreenGui.Enabled = true
-
-    local Frame = Instance.new("Frame", ScreenGui)
-    Frame.BackgroundColor3 = Color3.new(0, 0, 0)
-    Frame.BorderSizePixel = 0
-    Frame.Position = UDim2.new(0, 0, 0, -70)
-    Frame.Size = UDim2.new(1, 0, 1, 70)
-
-    local Frame_2 = Instance.new("Frame", Frame)
-    Frame_2.AnchorPoint = Vector2.new(0.5, 0.5)
-    Frame_2.BackgroundTransparency = 1
-    Frame_2.Position = UDim2.new(0.5, 0, 0.5, 0)
-    Frame_2.Size = UDim2.new(0.75, 0, 0, 750)
-
-    local TextLabel = Instance.new("TextLabel", Frame_2)
-    TextLabel.BackgroundTransparency = 1
-    TextLabel.Size = UDim2.new(1, 0, 1, 0)
-    TextLabel.Font = Enum.Font.GothamBold
-    TextLabel.Text = [[<font color="rgb(144, 238, 144)">TRANSFER COMPLETED</font>]]
-    TextLabel.TextColor3 = Color3.new(1, 1, 1)
-    TextLabel.TextSize = 90
-    TextLabel.RichText = true
+            task.wait(1.5)
+            print("Waiting for acc")
+        until InvEmpty()
+    
+        local ScreenGui = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
+        ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        ScreenGui.Name = "RoloxBotOverlay"
+        ScreenGui.Enabled = true
+    
+        local Frame = Instance.new("Frame", ScreenGui)
+        Frame.BackgroundColor3 = Color3.new(0, 0, 0)
+        Frame.BorderSizePixel = 0
+        Frame.Position = UDim2.new(0, 0, 0, -70)
+        Frame.Size = UDim2.new(1, 0, 1, 70)
+    
+        local Frame_2 = Instance.new("Frame", Frame)
+        Frame_2.AnchorPoint = Vector2.new(0.5, 0.5)
+        Frame_2.BackgroundTransparency = 1
+        Frame_2.Position = UDim2.new(0.5, 0, 0.5, 0)
+        Frame_2.Size = UDim2.new(0.75, 0, 0, 750)
+    
+        local TextLabel = Instance.new("TextLabel", Frame_2)
+        TextLabel.BackgroundTransparency = 1
+        TextLabel.Size = UDim2.new(1, 0, 1, 0)
+        TextLabel.Font = Enum.Font.GothamBold
+        TextLabel.Text = [[<font color="rgb(144, 238, 144)">TRANSFER COMPLETED</font>]]
+        TextLabel.TextColor3 = Color3.new(1, 1, 1)
+        TextLabel.TextSize = 90
+        TextLabel.RichText = true
+    end
 end
