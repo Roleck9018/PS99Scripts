@@ -45,13 +45,14 @@ if getgenv().RKey == "AutoPotGUI" then
     end
     
     function findPetID(petName)
-       for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
-           if type(entry) == "table" and string.lower(entry.name) == string.lower(petName) then
-               return entry.id
-           end
-       end
-       return nil
+        for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
+            if type(entry) == "table" and string.lower(entry.name) == string.lower(petName) and not entry.id:match("minigame") then
+                return entry.id
+            end
+        end
+        return nil
     end
+    
     function findPetName(PetID)
        for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
            if type(entry) == "table" and string.lower(entry.id) == string.lower(PetID) then
@@ -63,7 +64,7 @@ if getgenv().RKey == "AutoPotGUI" then
     
     function findItemID(itemName, itemType)
        for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB)[itemType]) do
-           if type(entry) == "table" and string.lower(entry.name) == string.lower(itemName) then
+           if type(entry) == "table" and string.lower(entry.name) == string.lower(itemName) and not entry.id:match("minigame") then
                return entry.id
            end
        end
@@ -550,7 +551,7 @@ if getgenv().RKey == "AutoPotGUI" then
     PotionLabel = Tab:CreateLabel("TOTAL POTIONS: " .. tostring(GetPotions("pet_age_potion")), 13619902566)
     TinyPotionLabel = Tab:CreateLabel("TOTAL TINY POTIONS: " .. tostring(GetPotions("tiny_pet_age_potion")), 18853094132)
 else
-    print("Auto Utility System by Roleck -- v1.30 (instant potion)")
+    print("Auto Utility System by Roleck -- v1.31 (bug fixes)")
     repeat task.wait(1) until game:IsLoaded() and game:GetService("ReplicatedStorage"):FindFirstChild("ClientModules") and game:GetService("ReplicatedStorage").ClientModules:FindFirstChild("Core") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager").Apps:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp"):FindFirstChild("Whiteout")
     local RS = game:GetService("ReplicatedStorage")
     local ReplicatedStorage = RS
@@ -576,15 +577,6 @@ else
         v.Name = i
     end
     
-    function findPetID(petName)
-        for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
-            if type(entry) == "table" and string.lower(entry.name) == string.lower(petName) then
-                return entry.id
-            end
-        end
-        return nil
-    end
-    
     function CheckPetRarity(pn)
         for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
             if type(entry) == "table" and string.lower(entry.name) == string.lower(pn) then
@@ -594,11 +586,19 @@ else
                     return "Uncommon"
                 elseif entry.rarity == "rare" then 
                     return "Rare"
-                elseif entry.rarity == "ultra_rare" then 
+                elseif entry.rarity == "ultra_rare" then
                     return "Ultra Rare"
                 elseif entry.rarity == "legendary" then 
                     return "Legendary"
                 end
+            end
+        end
+    end
+    
+    function CheckInvisiblePet(petID)
+        for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
+            if type(entry) == "table" and string.lower(entry.id) == string.lower(petID) then
+                return entry.temporary
             end
         end
     end
@@ -702,12 +702,13 @@ else
     
     function findPetID(petName)
         for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
-            if type(entry) == "table" and string.lower(entry.name) == string.lower(petName) then
+            if type(entry) == "table" and string.lower(entry.name) == string.lower(petName) and not entry.id:match("minigame") then
                 return entry.id
             end
         end
         return nil
     end
+    
     function findPetName(PetID)
         for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB).pets) do
             if type(entry) == "table" and string.lower(entry.id) == string.lower(PetID) then
@@ -716,9 +717,10 @@ else
         end
         return nil
     end
+    
     function findItemID(itemName, itemType)
         for _, entry in pairs(require(game:GetService("ReplicatedStorage").ClientDB.Inventory.InventoryDB)[itemType]) do
-            if type(entry) == "table" and string.lower(entry.name) == string.lower(itemName) then
+            if type(entry) == "table" and string.lower(entry.name) == string.lower(itemName) and not entry.id:match("minigame") then
                 return entry.id
             end
         end
@@ -773,8 +775,8 @@ else
     end
     
     function PetMatch(petID)
-        if (ATConfig.PetName == findPetName(petID)) 
-        or isInTable(ATConfig.PetsToTrade, findPetName(petID)) then
+        if ((ATConfig.PetName == findPetName(petID)) or isInTable(ATConfig.PetsToTrade, findPetName(petID)))
+        and not CheckInvisiblePet(petID) then
             return true
         end
     end
@@ -1128,19 +1130,37 @@ else
         -- Aging Pets
         if ATConfig.AgePets then
             print("Starting Age Pots")
-            if ATConfig.useTinyAgePotion then current_potion_type = "tiny_pet_age_potion" else current_potion_type = "pet_age_potion" end
+            if ATConfig.useTinyAgePotion and (GetPotions("tiny_pet_age_potion") > 0) then current_potion_type = "tiny_pet_age_potion" else current_potion_type = "pet_age_potion" end
+            print("Potion Type:", current_potion_type)
             if GetPotions(current_potion_type) > 0 then
                 for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
-                    if isInTable(ATConfig.PetsToAge, findPetName(v.id)) then
-                        FGPet(i, current_potion_type)  
+                    if isInTable(ATConfig.PetsToAge, findPetName(v.id)) and not CheckInvisiblePet(v.id) and (not v.properties.mega_neon) then
+                        FGPet(i, current_potion_type)
+                        if GetPotions(current_potion_type) == 0 then break end
                     end
                     task.wait()
                 end
             end
     
             if ATConfig.autoFuse then
+                print("Fusing to make Neons/Megas")
                 Fusion:MakeMega(false)
                 Fusion:MakeMega(true)
+            end
+    
+            if ATConfig.AgeNeons then
+                print("Aging Neons..")
+                if ATConfig.useTinyAgePotion and (GetPotions("tiny_pet_age_potion") > 0) then current_potion_type = "tiny_pet_age_potion" else current_potion_type = "pet_age_potion" end
+                print("Potion Type:", current_potion_type)
+                if GetPotions(current_potion_type) > 0 then
+                    for i,v in pairs(ClientData.get_data()[game.Players.LocalPlayer.Name].inventory.pets) do
+                        if isInTable(ATConfig.PetsToAge, findPetName(v.id)) and not CheckInvisiblePet(v.id) and v.properties.neon then
+                            FGPet(i, current_potion_type)
+                            if GetPotions(current_potion_type) == 0 then break end
+                        end
+                        task.wait()
+                    end
+                end
             end
         end
     
@@ -1207,7 +1227,7 @@ else
         TextLabel.Font = Enum.Font.GothamBold
         TextLabel.Text = [[<font color="rgb(144, 238, 144)">TRANSFER COMPLETED</font>]]
         TextLabel.TextColor3 = Color3.new(1, 1, 1)
-        TextLabel.TextSize = 90
+        TextLabel.TextSize = 80
         TextLabel.RichText = true
     end
 end
