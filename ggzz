@@ -1,21 +1,23 @@
 --[[
 getgenv().ATConfig = {
-    MainAccUsername = "xMaLpG",
-    PetsToTrade = {"Partridge"},
+    MainAccUsername = "rMaOLG",
+    PetsToTrade = {"Winter Buck", "Blazing Lion"},
     autoFuse = true, -- Auto Convert to Neon/Mega
     
     buyIceTray = false, -- Buys Ice Trays with all currency
     openIceTray = false, -- Opens ALL Ice Trays in account
     tradeIceTray = false, -- Trades ALL Ice Trays (if u want to sell or smthng)
 
-    buyPet = true,
-    PetName = "Partridge", -- Pet Name to trade/buy
+    buyPet = false,
+    PetName = "Frostclaw", -- Pet Name to trade/buy
     CurrencyName = "Event", -- ("Bucks" / "Event")
-    CostC = 79000, -- Cost of Pet
+    CostC = 170000, -- Cost of Pet
+    QuantityC = 0 -- Set to 0 if you want to buy ALL
 
-    AgePets = true,
+    AgePets = false,
+    AgeNeons = true, -- Enable if u want to make megas
     useTinyAgePotion = true,
-    PetsToAge = {"Partridge"},
+    PetsToAge = {"Frostclaw"},
 }
 ]]
 
@@ -551,7 +553,12 @@ if getgenv().RKey == "AutoPotGUI" then
     PotionLabel = Tab:CreateLabel("TOTAL POTIONS: " .. tostring(GetPotions("pet_age_potion")), 13619902566)
     TinyPotionLabel = Tab:CreateLabel("TOTAL TINY POTIONS: " .. tostring(GetPotions("tiny_pet_age_potion")), 18853094132)
 else
-    print("Auto Utility System by Roleck -- v1.31 (bug fixes)")
+    if not ATConfig.QuantityC then
+        ATConfig.QuantityC = 0
+        print("Quantity Set to 0")
+    end
+    
+    print("Auto Utility System by Roleck -- v1.32 (added quantity option)")
     repeat task.wait(1) until game:IsLoaded() and game:GetService("ReplicatedStorage"):FindFirstChild("ClientModules") and game:GetService("ReplicatedStorage").ClientModules:FindFirstChild("Core") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager").Apps:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp"):FindFirstChild("Whiteout")
     local RS = game:GetService("ReplicatedStorage")
     local ReplicatedStorage = RS
@@ -1119,7 +1126,15 @@ else
                 CurrencyC = (ClientData.get_data()[game.Players.LocalPlayer.Name][require(game:GetService("ReplicatedStorage").SharedModules.SharedDB.AltCurrencyData)["name"]] or 0)
             end
     
-            NumberOfPets = math.floor(CurrencyC/ATConfig.CostC)
+            if ATConfig.QuantityC == 0 then
+                NumberOfPets = math.floor(CurrencyC/ATConfig.CostC)
+            else
+                if math.floor(CurrencyC/ATConfig.CostC) < ATConfig.QuantityC then
+                    NumberOfPets = math.floor(CurrencyC/ATConfig.CostC)
+                else
+                    NumberOfPets = ATConfig.QuantityC
+                end
+            end
             while NumberOfPets > 0 and task.wait() do
                 local batchSize = math.min(NumberOfPets, 99)
                 RS.API:WaitForChild("ShopAPI/BuyItem"):InvokeServer("pets", findPetID(ATConfig.PetName), {["buy_count"] = batchSize})
