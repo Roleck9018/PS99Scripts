@@ -12,7 +12,7 @@ getgenv().ATConfig = {
     PetName = "Frostclaw", -- Pet Name to trade/buy
     CurrencyName = "Event", -- ("Bucks" / "Event")
     CostC = 170000, -- Cost of Pet
-    QuantityC = 0 -- Set to 0 if you want to buy ALL
+    QuantityC = 0, -- Set to 0 if you want to buy ALL
 
     AgePets = false,
     AgeNeons = true, -- Enable if u want to make megas
@@ -555,11 +555,14 @@ if getgenv().RKey == "AutoPotGUI" then
 else
     if not ATConfig.QuantityC then
         ATConfig.QuantityC = 0
-        print("Quantity Set to 0")
     end
     
     print("Auto Utility System by Roleck -- v1.32 (added quantity option)")
     repeat task.wait(1) until game:IsLoaded() and game:GetService("ReplicatedStorage"):FindFirstChild("ClientModules") and game:GetService("ReplicatedStorage").ClientModules:FindFirstChild("Core") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager") and game:GetService("ReplicatedStorage").ClientModules.Core:FindFirstChild("UIManager").Apps:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp") and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TransitionsApp"):FindFirstChild("Whiteout")
+    task.wait(3)
+    
+    print("[1] Check Done")
+    
     local RS = game:GetService("ReplicatedStorage")
     local ReplicatedStorage = RS
     local ClientData = require(RS.ClientModules.Core.ClientData)
@@ -568,7 +571,11 @@ else
     local Player = game:GetService("Players").LocalPlayer
     local VirtualInputManager = game:GetService("VirtualInputManager")
     
+    print("[2] Check Done")
+    
     local Fusion = loadstring(game:HttpGet("https://raw.githubusercontent.com/Arroz-con/ShittyHub/main/Modules/Fusion.lua"))()
+    
+    print("[3] Check Done")
     
     current_potion_type = nil
     
@@ -1050,6 +1057,8 @@ else
         dailyLoginAppClick()
     end)
     
+    print("[4] Check Done")
+    
     if Player.PlayerGui.NewsApp.Enabled then
         local AbsPlay = Player.PlayerGui.NewsApp
             :WaitForChild("EnclosingFrame")
@@ -1069,6 +1078,8 @@ else
     
     repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     dailyLoginAppClick()
+    
+    print("[5] Check Done")
     
     repeat task.wait(2) until game:GetService("Players")
     if game.Players.LocalPlayer.Name == ATConfig.MainAccUsername then
