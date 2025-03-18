@@ -532,7 +532,7 @@ while Player.PlayerGui.NewsApp.Enabled and task.wait(1) do
         local AbsPlay = Player.PlayerGui.NewsApp
             :WaitForChild("EnclosingFrame")
             :WaitForChild("MainFrame")
-            :WaitForChild("Contents")
+            :WaitForChild("Buttons")
             :WaitForChild("PlayButton")
 
         firesignal(AbsPlay.MouseButton1Down)
