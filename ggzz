@@ -1,13 +1,15 @@
 -- getgenv().ATConfig = {
---     MainAccUsername = "",
+--     MainAccUsername = "tq1q13131",
 --     PetsToTrade = {"Sweetheart Rat"},
 --     autoFuse = true, -- Auto Convert to Neon/Mega
     
 --     buyPet = true,
---     PetName = "Sweetheart Rat", -- Pet Name to trade/buy
---     CurrencyName = "Event", -- ("Bucks" / "Event")
---     CostC = 2400, -- Cost of Pet
+--     PetName = "Clover Cow", -- Pet Name to trade/buy
+--     CurrencyName = "Bucks", -- ("Bucks" / "Event")
+--     CostC = 1800, -- Cost of Pet
 --     QuantityC = 0, -- Set to 0 if you want to buy ALL
+
+--     SmartBuy = true, -- EXPERIMENTAL FEATURE
 
 --     AgePets = false,
 --     AgeNeons = false, -- Enable if u want to make megas
@@ -15,9 +17,9 @@
 --     PetsToAge = {"Frostclaw"},
 
 --     Leave = true, -- Leaves the game once trade is completed
---     LeaveDelay = 60 -- Delay in seconds to wait before leaving
+--     LeaveDelay = 20 -- Delay in seconds to wait before leaving
 -- }
--- loadstring(game:HttpGet("https://raw.githubusercontent.com/anoy010/amm/refs/heads/main/RoloxService"))()
+-- -- loadstring(game:HttpGet("https://raw.githubusercontent.com/anoy010/amm/refs/heads/main/RoloxService"))()
 
 if not ATConfig then
     game.Players.LocalPlayer:Kick("Config is Missing!")
@@ -535,13 +537,23 @@ while Player.PlayerGui.NewsApp.Enabled and task.wait(1) do
             :WaitForChild("Buttons")
             :WaitForChild("PlayButton")
 
-        firesignal(AbsPlay.MouseButton1Down)
-        firesignal(AbsPlay.MouseButton1Click)
-        firesignal(AbsPlay.MouseButton1Up)
+        -- firesignal(AbsPlay.MouseButton1Down)
+        -- firesignal(AbsPlay.MouseButton1Click)
+        -- firesignal(AbsPlay.MouseButton1Up)
+        clickGuiButton(AbsPlay)
+    end
+
+    if Player.PlayerGui.DialogApp.Dialog.NormalDialog.Info.TextLabel.Text:match('You have been refunded') then
+        local mainButton = game:GetService("Players").LocalPlayer.PlayerGui.DialogApp.Dialog.NormalDialog.Buttons.ButtonTemplate
+        -- firesignal(mainButton.MouseButton1Down)
+        -- firesignal(mainButton.MouseButton1Click)
+        -- firesignal(mainButton.MouseButton1Up)
+        clickGuiButton(mainButton)
     end
 
     if Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Visible then --Baby, ChooseParent
-        firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Click)
+        -- firesignal(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby.MouseButton1Click)
+        clickGuiButton(Player.PlayerGui.DialogApp.Dialog.RoleChooserDialog.Baby)
         RoleChooserDialogConnection:Disconnect()
     end
 end
@@ -601,6 +613,7 @@ else
 
     if ATConfig.buyPet then
         print("Buy Pet : Enabled")
+        local CurrencyC = 100000000
         if ATConfig.CurrencyName == "Bucks" then
             CurrencyC = ClientData.get_data()[game.Players.LocalPlayer.Name].money
         elseif ATConfig.CurrencyName == "Event" then
@@ -608,18 +621,48 @@ else
         end
 
         print("QuantityC is", ATConfig.QuantityC)
-        if ATConfig.QuantityC == 0 then
-            NumberOfPets = math.floor(CurrencyC/ATConfig.CostC)
-            print("[1] NumberOfPets:", NumberOfPets)
-        else
-            if math.floor(CurrencyC/ATConfig.CostC) < ATConfig.QuantityC then
-                NumberOfPets = math.floor(CurrencyC/ATConfig.CostC)
-                print("[2] NumberOfPets:", NumberOfPets)
+
+        local NumberOfPets = 0
+
+        if ATConfig.SmartBuy then
+            local POTION_TABLE = {
+                ["Common"] = 2,
+                ["Uncommon"] = 3,
+                ["Rare"] = 4,
+                ["Ultra Rare"] = 6,
+                ["Legendary"] = 10
+            }           
+
+            print("[SMART BUY] - Enabled")
+            local RARITY = CheckPetRarity(ATConfig.PetName)
+            print("[SMART BUY] - Rarity:", RARITY)
+
+            local MAX_QUANTITY = math.floor(CurrencyC / ATConfig.CostC)
+            print("[SMART BUY] - Max Quantity:", MAX_QUANTITY)
+
+            local POTIONS = 0
+            if ATConfig.useTinyAgePotion then
+                POTIONS = math.floor(GetPotions("tiny_pet_age_potion")/10) + GetPotions("pet_age_potion")
             else
-                NumberOfPets = ATConfig.QuantityC
-                print("[3] NumberOfPets:", NumberOfPets)
+                POTIONS = GetPotions("pet_age_potion")
+            end
+            local POTION_PER_PET = POTION_TABLE[RARITY]
+            local MAX_POT_PETS = math.floor(POTIONS / POTION_PER_PET)
+
+            NumberOfPets = math.min(MAX_POT_PETS, MAX_QUANTITY)
+            print("[SMART BUY] - Final Quantiy:", NumberOfPets)
+        else
+            local maxPets = math.floor(CurrencyC / ATConfig.CostC)
+            if ATConfig.QuantityC == 0 then
+                NumberOfPets = maxPets
+                print("[1] NumberOfPets:", NumberOfPets)
+            else
+                NumberOfPets = math.min(maxPets, ATConfig.QuantityC)
+                print("[2] NumberOfPets:", NumberOfPets)
             end
         end
+
+
         while NumberOfPets > 0 and task.wait() do
             local batchSize = math.min(NumberOfPets, 99)
             RS.API:WaitForChild("ShopAPI/BuyItem"):InvokeServer("pets", findPetID(ATConfig.PetName), {["buy_count"] = batchSize})
