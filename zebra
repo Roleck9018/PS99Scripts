@@ -1,0 +1,242 @@
+-- UltraAggro_Grayscale_GUI.lua — maximal optimization + total grayscale (world + GUIs)
+
+-- Services
+local Players     = game:GetService("Players")
+local Lighting    = game:GetService("Lighting")
+local StarterGui  = game:GetService("StarterGui")
+local RunService  = game:GetService("RunService")
+local Terrain     = workspace:FindFirstChildOfClass("Terrain")
+
+-- Helpers
+local function safe_set(inst, prop, value) pcall(function() inst[prop] = value end) end
+local function safe(f, ...) pcall(f, ...) end
+
+-- =========================
+-- GLOBAL GRAYSCALE (3D)
+-- =========================
+local GRAY_NAME = "GrayFX"
+local grayFX = Lighting:FindFirstChild(GRAY_NAME) or Instance.new("ColorCorrectionEffect")
+grayFX.Name        = GRAY_NAME
+grayFX.Parent      = Lighting
+grayFX.Enabled     = true
+grayFX.Saturation  = -1
+grayFX.Brightness  = 0
+grayFX.Contrast    = 0
+grayFX.TintColor   = Color3.new(1,1,1)
+
+safe(function()
+    Lighting.GlobalShadows  = false
+    Lighting.Brightness     = 0
+    Lighting.FogEnd         = 9e9
+    Lighting.Ambient        = Color3.fromRGB(128,128,128)
+    Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
+end)
+
+for _, e in ipairs(Lighting:GetChildren()) do
+    if e ~= grayFX and (e:IsA("BloomEffect") or e:IsA("DepthOfFieldEffect") or e:IsA("SunRaysEffect") or e:IsA("ColorCorrectionEffect") or e:IsA("BlurEffect")) then
+        safe_set(e, "Enabled", false)
+    elseif e:IsA("Atmosphere") then
+        safe_set(e, "Density", 0)
+        safe_set(e, "Haze", 0)
+        safe_set(e, "Glare", 0)
+    end
+end
+Lighting.ChildAdded:Connect(function(inst)
+    if inst:IsA("ColorCorrectionEffect") and inst.Name == GRAY_NAME then
+        safe_set(inst, "Enabled", true); safe_set(inst, "Saturation", -1)
+    elseif inst:IsA("BloomEffect") or inst:IsA("DepthOfFieldEffect") or inst:IsA("SunRaysEffect") or inst:IsA("ColorCorrectionEffect") or inst:IsA("BlurEffect") then
+        safe_set(inst, "Enabled", false)
+    elseif inst:IsA("Atmosphere") then
+        safe_set(inst, "Density", 0); safe_set(inst, "Haze", 0); safe_set(inst, "Glare", 0)
+    end
+end)
+
+-- =========================
+-- TERRAIN + RENDER FLOOR
+-- =========================
+if Terrain then
+    safe_set(Terrain, "Decoration", false)
+    safe_set(Terrain, "WaterWaveSize", 0)
+    safe_set(Terrain, "WaterWaveSpeed", 0)
+    safe_set(Terrain, "WaterReflectance", 0)
+    safe_set(Terrain, "WaterTransparency", 1)
+    safe(function() Terrain:Clear() end)
+end
+
+safe(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat, false) end)
+safe(function()
+    local ugs = UserSettings():GetService("UserGameSettings")
+    ugs.GraphicsQualityLevel = 1
+    ugs.SavedQualityLevel    = 1
+    ugs.MasterVolume         = 0
+end)
+safe(function()
+    local R = settings().Rendering
+    R.QualityLevel        = Enum.QualityLevel.Level01
+    R.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level01
+end)
+
+safe(function()
+    if sethiddenproperty then
+        sethiddenproperty(Lighting, "Technology", 2)
+        if Terrain then sethiddenproperty(Terrain, "Decoration", false) end
+    end
+end)
+
+-- =========================
+-- WORLD REDUCE (3D)
+-- =========================
+local NUKE_NAME_PATTERNS = {
+    "^Tree", "^Bush", "^Grass", "Water", "Foilage", "Foliage", "Debris",
+    "Roundabout", "Seesaw", "Swing", "Playground", "Trampoline", "Balloon",
+    "Weather", "Rain", "Snow", "Lightning", "Fog", "Mist", "Cloud",
+    "VFX", "SFX", "FX", "Particles", "Sparkle", "Fireworks", "Confetti",
+    "Interactable", "Deco", "Decor", "Model"
+}
+local function name_matches(n)
+    for _, pat in ipairs(NUKE_NAME_PATTERNS) do
+        if string.find(n, pat) then return true end
+    end
+    return false
+end
+
+local GRAY3D = Color3.fromRGB(145,145,145)
+
+local function reduce3D(inst)
+    if inst:IsA("Folder") or inst:IsA("Model") or inst:IsA("Part") or inst:IsA("MeshPart") then
+        if name_matches(inst.Name) then safe(function() inst:Destroy() end); return end
+    end
+    if inst:IsA("Explosion") then safe_set(inst, "BlastPressure", 1); safe_set(inst, "BlastRadius", 1); return end
+    if inst:IsA("PointLight") or inst:IsA("SpotLight") or inst:IsA("SurfaceLight") then
+        safe_set(inst, "Enabled", false); safe_set(inst, "Shadows", false); return
+    end
+    if inst:IsA("ParticleEmitter") or inst:IsA("Trail") or inst:IsA("Beam") then
+        safe_set(inst, "Enabled", false); if inst:IsA("ParticleEmitter") or inst:IsA("Trail") then safe_set(inst, "Lifetime", NumberRange.new(0)) end; return
+    end
+    if inst:IsA("BillboardGui") or inst:IsA("SurfaceGui") then safe_set(inst, "Enabled", false); return end
+    if inst:IsA("BasePart") then safe_set(inst, "Material", Enum.Material.Plastic); safe_set(inst, "Reflectance", 0); safe_set(inst, "Color", GRAY3D); return end
+    if inst:IsA("MeshPart") then safe_set(inst, "Material", Enum.Material.Plastic); safe_set(inst, "Reflectance", 0); safe_set(inst, "Color", GRAY3D); safe_set(inst, "TextureID", ""); return end
+    if inst:IsA("Decal") or inst:IsA("Texture") then safe_set(inst, "Transparency", 1); return end
+    if inst:IsA("ShirtGraphic") then safe_set(inst, "Graphic", ""); return end
+    if inst:IsA("Shirt") then safe_set(inst, "ShirtTemplate", ""); return end
+    if inst:IsA("Pants") then safe_set(inst, "PantsTemplate", ""); return end
+    if inst:IsA("SpecialMesh") then safe_set(inst, "TextureId", ""); return end
+end
+
+-- =========================
+-- GUI GRAYSCALE (2D)
+-- =========================
+local GRAY2D_BG   = Color3.fromRGB(40,40,40)
+local GRAY2D_TEXT = Color3.fromRGB(220,220,220)
+local GRAY2D_BRD  = Color3.fromRGB(80,80,80)
+
+local function reduceGUI(inst)
+    -- Hide colored images outright to guarantee no color leakage
+    if inst:IsA("ImageLabel") or inst:IsA("ImageButton") then
+        safe_set(inst, "ImageTransparency", 1)      -- remove image color
+        safe_set(inst, "ImageColor3", Color3.new(1,1,1))
+        safe_set(inst, "BackgroundColor3", GRAY2D_BG)
+        safe_set(inst, "BorderColor3", GRAY2D_BRD)
+        return
+    end
+
+    -- Text to grayscale, remove styling that may imply color
+    if inst:IsA("TextLabel") or inst:IsA("TextButton") or inst:IsA("TextBox") then
+        safe_set(inst, "TextColor3", GRAY2D_TEXT)
+        safe_set(inst, "BackgroundColor3", GRAY2D_BG)
+        safe_set(inst, "BorderColor3", GRAY2D_BRD)
+        safe_set(inst, "RichText", false)
+        safe_set(inst, "TextStrokeTransparency", 1)
+        return
+    end
+
+    -- Generic containers
+    if inst:IsA("Frame") or inst:IsA("ScrollingFrame") or inst:IsA("PageLayout") or inst:IsA("CanvasGroup") then
+        safe_set(inst, "BackgroundColor3", GRAY2D_BG)
+        safe_set(inst, "BorderColor3", GRAY2D_BRD)
+        return
+    end
+
+    -- Gradients/Strokes -> gray
+    if inst:IsA("UIGradient") then
+        safe_set(inst, "Enabled", false) -- disable to avoid color ramps
+        return
+    end
+    if inst:IsA("UIStroke") then
+        safe_set(inst, "Color", GRAY2D_BRD)
+        return
+    end
+
+    -- ViewportFrame is a 3D render; force invisible to avoid colored content
+    if inst:IsA("ViewportFrame") then
+        safe_set(inst, "Visible", false)
+        return
+    end
+
+    -- VideoFrame can emit arbitrary color; hide
+    if inst:IsA("VideoFrame") then
+        safe_set(inst, "Playing", false)
+        safe_set(inst, "Visible", false)
+        return
+    end
+end
+
+-- Process initial PlayerGui and StarterGui
+local function sweepGUIs(root)
+    if not root then return end
+    local all = root:GetDescendants()
+    for i = 1, #all do reduceGUI(all[i]) end
+end
+
+-- =========================
+-- BOOTSTRAP PASSES
+-- =========================
+do
+    -- World first pass
+    local world = workspace:GetDescendants()
+    for i = 1, #world do reduce3D(world[i]) end
+    for _, e in ipairs(Lighting:GetChildren()) do
+        if e ~= grayFX and (e:IsA("BloomEffect") or e:IsA("DepthOfFieldEffect") or e:IsA("SunRaysEffect") or e:IsA("ColorCorrectionEffect") or e:IsA("BlurEffect")) then
+            safe_set(e, "Enabled", false)
+        end
+    end
+
+    -- GUI first pass
+    local lp = Players.LocalPlayer
+    local pg = lp and lp:FindFirstChild("PlayerGui")
+    sweepGUIs(pg)
+    sweepGUIs(StarterGui)
+end
+
+-- Queue new world instances
+local wQueue, wCount = {}, 0
+workspace.DescendantAdded:Connect(function(inst) wQueue[inst] = true; wCount += 1 end)
+
+-- Queue new GUI instances
+local function hookGui(root)
+    if not root then return end
+    root.DescendantAdded:Connect(function(inst) reduceGUI(inst) end)
+end
+local lp = Players.LocalPlayer
+local pg = lp and lp:FindFirstChild("PlayerGui")
+hookGui(pg)
+hookGui(StarterGui)
+
+-- Keep GUIs hooked when PlayerGui appears/respawns
+if lp then
+    lp.CharacterAdded:Connect(function() pg = lp:FindFirstChild("PlayerGui"); hookGui(pg); sweepGUIs(pg) end)
+    lp:GetPropertyChangedSignal("PlayerGui"):Connect(function() pg = lp:FindFirstChild("PlayerGui"); hookGui(pg); sweepGUIs(pg) end)
+end
+
+-- Batch reducer tick
+RunService.Heartbeat:Connect(function()
+    if wCount > 0 then
+        for inst in pairs(wQueue) do
+            wQueue[inst] = nil
+            wCount -= 1
+            if inst.Parent then reduce3D(inst) end
+        end
+    end
+end)
+
+print("-- UltraAggro_Grayscale_GUI: ACTIVE --")
